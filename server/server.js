@@ -1,56 +1,69 @@
-const express = require('express');
-const dotenv = require('dotenv');
-const cors = require('cors');
+// ─────────────────────────────────────────────────────────────────────────────
+// server/server.js  —  Sentinel API Server
+// ─────────────────────────────────────────────────────────────────────────────
+const express   = require('express');
+const dotenv    = require('dotenv');
+const cors      = require('cors');
 const connectDB = require('./config/db');
-const { MongoClient, ServerApiVersion } = require('mongodb');
-// Load environment variables
-dotenv.config();
 
-// Connect to MongoDB
+// Load .env first, then connect DB
+dotenv.config();
 connectDB();
 
 const app = express();
 
-// Middleware
+// ── Middleware ────────────────────────────────────────────────────────────────
 app.use(cors({
-  origin: 'http://localhost:5173', // Your Vite dev server URL
+  origin: process.env.CLIENT_URL || 'http://localhost:5173',
   credentials: true,
 }));
-app.use(express.json()); // Parse incoming JSON requests
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 
-const uri = "mongodb+srv://EARMSAdmin:Xd2AGE6mPov9haCD@cluster0.8ev9gxa.mongodb.net/?appName=Cluster0";
-// Create a MongoClient with a MongoClientOptions object to set the Stable API version
-const client = new MongoClient(uri, {
- serverApi: {
-  version: ServerApiVersion.v1,
-  strict: true,
-  deprecationErrors: true,
- }
-});
-async function run() {
- try {
-  // Connect the client to the server (optional starting in v4.7)
-  await client.connect();
-  // Send a ping to confirm a successful connection
-  await client.db("admin").command({ ping: 1 });
-  console.log("Pinged your deployment. You successfully connected to MongoDB!");
- } finally {
-  // Ensures that the client will close when you finish/error
-  await client.close();
- }
-}
-run().catch(console.dir);
-
-
-// Routes
-app.use('/api/auth', require('./routes/authRoutes'));
+// ── Routes ────────────────────────────────────────────────────────────────────
+app.use('/api/auth',      require('./routes/authRoutes'));
 app.use('/api/dashboard', require('./routes/dashboardRoutes'));
-// Health check route
-app.get('/', (req, res) => {
-  res.json({ message: 'Access Management API is running' });
+app.use('/api/users',     require('./routes/userRoutes'));      // Admin user management
+app.use('/api/requests',  require('./routes/requestRoutes'));   // Access requests
+
+// ── Health check ──────────────────────────────────────────────────────────────
+app.get('/api/health', (req, res) => {
+  res.json({
+    status:  'OK',
+    project: 'Sentinel',
+    message: 'Guard Every Gateway. Grant with Confidence.',
+    time:    new Date().toISOString(),
+  });
 });
 
+// ── 404 handler ───────────────────────────────────────────────────────────────
+app.use((req, res) => {
+  res.status(404).json({ message: `Route ${req.originalUrl} not found` });
+});
+
+// ── Global error handler ─────────────────────────────────────────────────────
+app.use((err, req, res, next) => {
+  console.error('❌ Server error:', err.stack);
+  res.status(err.status || 500).json({
+    message: err.message || 'Internal server error',
+  });
+});
+
+// ── Start ─────────────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`🛡️  Sentinel server running on port ${PORT}`);
+  console.log(`📡  API: http://localhost:${PORT}/api/health`);
 });
+
+/*
+ ─────────────────────────────────────────────────────────────────────────────
+ BUG EXPLANATION — What was wrong in the original server.js:
+
+ 3. MISSING ROUTES — /api/users and /api/requests were not registered, so
+    AdminHome and ManagerHome API calls would all return 404.
+
+ 4. NO ERROR HANDLERS — Without a global error handler, unhandled async errors
+    crash the process silently or send HTML error pages to the React client.
+ ─────────────────────────────────────────────────────────────────────────────
+*/

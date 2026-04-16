@@ -11,9 +11,10 @@ const generateToken = (user) => {
     },
     process.env.JWT_SECRET,
     { expiresIn: process.env.JWT_EXPIRE }
+    
   );
 };
-
+console.log("JWT SECRET:", process.env.JWT_SECRET);
 // ─── REGISTER ────────────────────────────────────────────────────
 // POST /api/auth/register
 const register = async (req, res) => {
@@ -78,6 +79,7 @@ const login = async (req, res) => {
     }
 
     const token = generateToken(user);
+    console.log("JWT SECRET:", process.env.JWT_SECRET);
 
     res.status(200).json({
       message: 'Login successful',

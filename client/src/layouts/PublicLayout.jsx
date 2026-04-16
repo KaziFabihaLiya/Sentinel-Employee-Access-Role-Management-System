@@ -221,7 +221,7 @@ const PublicFooter = () => (
       <div style={{display:'flex',gap:'1.5rem',alignItems:'center'}}>
         <Link to="/about"   style={{color:T.muted,fontSize:'.82rem',textDecoration:'none'}}>About</Link>
         <Link to="/support" style={{color:T.muted,fontSize:'.82rem',textDecoration:'none'}}>Support</Link>
-        <span style={{color:T.muted,fontSize:'.8rem'}}>© 2025 Sentinel</span>
+        <span style={{color:T.muted,fontSize:'.8rem'}}>© 2026 Sentinel by Kazi Fabiha Golam Liya</span>
       </div>
     </div>
   </footer>

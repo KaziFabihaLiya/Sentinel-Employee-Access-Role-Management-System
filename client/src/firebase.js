@@ -5,12 +5,12 @@ import { initializeApp } from "firebase/app";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyDYqRaF-02PeoD0sj4KDNldsS5IskeUXOo",
-  authDomain: "sentinel-access-control.firebaseapp.com",
-  projectId: "sentinel-access-control",
-  storageBucket: "sentinel-access-control.firebasestorage.app",
-  messagingSenderId: "521549164408",
-  appId: "1:521549164408:web:ce163326ff17c1bd0d228d"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
 // Initialize Firebase
