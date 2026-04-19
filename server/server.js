@@ -20,12 +20,13 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// ── Routes ────────────────────────────────────────────────────────────────────
+// ── Routes ───────────────────────────────────────────────────────────────────
 app.use('/api/auth',      require('./routes/authRoutes'));
 app.use('/api/dashboard', require('./routes/dashboardRoutes'));
-app.use('/api/users',     require('./routes/userRoutes'));      // Admin user management
-app.use('/api/requests',  require('./routes/requestRoutes'));   // Access requests
-
+app.use('/api/users',     require('./routes/userRoutes'));
+app.use('/api/requests',  require('./routes/requestRoutes'));
+app.use('/api/roles',     require('./routes/roleRoutes'));      // ← ADD
+app.use('/api/audit',     require('./routes/auditRoutes'));     // ← ADD
 // ── Health check ──────────────────────────────────────────────────────────────
 app.get('/api/health', (req, res) => {
   res.json({
