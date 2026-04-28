@@ -1,7 +1,7 @@
 import { Outlet, Link, NavLink, useLocation } from 'react-router';
 import { useState, useEffect } from 'react';
 
-/* ─── tokens ─── */
+/*   ─ tokens   ─ */
 const T = {
   navy:    '#050D1F',
   navyMid: '#0B1730',
@@ -82,7 +82,7 @@ const GlobalStyles = () => (
   `}</style>
 );
 
-/* ─── Grid background ─── */
+/*   ─ Grid background   ─ */
 const GridBg = () => (
   <div style={{position:'absolute',inset:0,overflow:'hidden',pointerEvents:'none',zIndex:0}}>
     <div style={{
@@ -98,7 +98,7 @@ const GridBg = () => (
   </div>
 );
 
-/* ─── Navbar ─── */
+/*   ─ Navbar   ─ */
 const PublicNavbar = () => {
   const [scrolled, setScrolled]   = useState(false);
   const [menuOpen, setMenuOpen]   = useState(false);
@@ -198,7 +198,7 @@ const PublicNavbar = () => {
   );
 };
 
-/* ─── Footer ─── */
+/*   ─ Footer   ─ */
 const PublicFooter = () => (
   <footer style={{
     background:T.navyMid,
@@ -227,7 +227,7 @@ const PublicFooter = () => (
   </footer>
 );
 
-/* ─── Layout ─── */
+/*   ─ Layout   ─ */
 const PublicLayout = () => (
   <>
     <GlobalStyles/>

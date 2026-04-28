@@ -1,10 +1,10 @@
 // client/src/styles/darkTokens.jsx
-// ─────────────────────────────────────────────────────────────────────────────
+//                      
 // Sentinel shared design primitives — imported by all dashboard pages
 // Usage: import { T, Sk, StatusBadge, RiskBadge, Toast, PageHeader, TABLE_TH, GLOBAL_CSS } from '../../styles/darkTokens';
-// ─────────────────────────────────────────────────────────────────────────────
+//                      
 
-// ── Color tokens ─────────────────────────────────────────────────────────────
+//    Color tokens      
 export const T = {
   navy:        '#050D1F',
   navyMid:     '#0B1730',
@@ -27,7 +27,7 @@ export const T = {
   rejected:    '#EF4444',
 };
 
-// ── TABLE_TH style object ─────────────────────────────────────────────────────
+//    TABLE_TH style object                                                     ─
 export const TABLE_TH = {
   padding:        '.7rem 1.25rem',
   textAlign:      'left',
@@ -43,7 +43,7 @@ export const TABLE_TH = {
   borderBottomColor: 'rgba(0,198,255,0.12)',
 };
 
-// ── Global CSS ────────────────────────────────────────────────────────────────
+//    Global CSS        ─
 export const GLOBAL_CSS = `
   @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap');
   @keyframes fadeUp       { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
@@ -62,7 +62,7 @@ export const GLOBAL_CSS = `
   }
 `;
 
-// ── Skeleton loader ───────────────────────────────────────────────────────────
+//    Skeleton loader    
 export const Sk = ({ w = '100%', h = '16px', r = '6px' }) => (
   <div style={{
     width: w, height: h, borderRadius: r,
@@ -72,7 +72,7 @@ export const Sk = ({ w = '100%', h = '16px', r = '6px' }) => (
   }} />
 );
 
-// ── Status Badge ──────────────────────────────────────────────────────────────
+//    Status Badge      ─
 export const StatusBadge = ({ status }) => {
   const map = {
     Pending:  { color: '#F59E0B', bg: 'rgba(245,158,11,.12)',  label: 'Pending'  },
@@ -97,7 +97,7 @@ export const StatusBadge = ({ status }) => {
   );
 };
 
-// ── Risk Badge ────────────────────────────────────────────────────────────────
+//    Risk Badge        ─
 export const RiskBadge = ({ level }) => {
   const map = {
     low:    { color: '#10D988', bg: 'rgba(16,217,136,.1)'  },
@@ -122,7 +122,7 @@ export const RiskBadge = ({ level }) => {
   );
 };
 
-// ── Toast notification ────────────────────────────────────────────────────────
+//    Toast notification                                                         
 export const Toast = ({ msg, type = 'success' }) => (
   <div style={{
     position: 'fixed', bottom: '2rem', right: '2rem', zIndex: 2000,
@@ -141,7 +141,7 @@ export const Toast = ({ msg, type = 'success' }) => (
   </div>
 );
 
-// ── Page Header ───────────────────────────────────────────────────────────────
+//    Page Header        
 export const PageHeader = ({ badge = 'Employee', badgeColor = 'teal', title, sub, action }) => {
   const colorMap = {
     teal:   { color: '#00C6FF', bg: 'rgba(0,198,255,.08)',   border: 'rgba(0,198,255,.2)'   },
@@ -184,7 +184,7 @@ export const PageHeader = ({ badge = 'Employee', badgeColor = 'teal', title, sub
   );
 };
 
-// ── Metric Card ───────────────────────────────────────────────────────────────
+//    Metric Card        
 export const MetricCard = ({ label, value, icon, accent, sub, loading, linkTo, linkLabel }) => (
   <div style={{
     background: '#0F1E38', border: '1px solid rgba(0,198,255,0.12)',

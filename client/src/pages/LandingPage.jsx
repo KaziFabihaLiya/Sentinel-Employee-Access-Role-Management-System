@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router";
 
-/* ─────────────────────────── DESIGN TOKENS ─────────────────────────── */
+/*                           ─ DESIGN TOKENS                           ─ */
 const T = {
   navy:    "#050D1F",
   navyMid: "#0B1730",
@@ -22,7 +22,7 @@ const T = {
 const FONT_URL =
   "https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap";
 
-/* ─────────────────────────── GLOBAL STYLES ─────────────────────────── */
+/*                           ─ GLOBAL STYLES                           ─ */
 const GlobalStyles = () => (
   <style>{`
     @import url('${FONT_URL}');
@@ -156,7 +156,7 @@ const GlobalStyles = () => (
   `}</style>
 );
 
-/* ─────────────────────────── GRID BACKGROUND ─────────────────────────── */
+/*                           ─ GRID BACKGROUND                           ─ */
 const GridBg = () => (
   <div style={{
     position:"absolute",inset:0,overflow:"hidden",pointerEvents:"none",zIndex:0,
@@ -186,7 +186,7 @@ const GridBg = () => (
   </div>
 );
 
-/* ─────────────────────────── NAVBAR ─────────────────────────── */
+/*                           ─ NAVBAR                           ─ */
 // const Navbar = () => {
 //   const [scrolled, setScrolled] = useState(false);
 //   const [menuOpen, setMenuOpen] = useState(false);
@@ -298,7 +298,7 @@ const GridBg = () => (
 //   );
 // };
 
-/* ─────────────────────────── HERO SECTION ─────────────────────────── */
+/*                           ─ HERO SECTION                           ─ */
 const HeroSection = () => {
   const [typed, setTyped] = useState("");
   const words = ["Employees","Managers","Administrators"];
@@ -452,7 +452,7 @@ const HeroSection = () => {
   );
 };
 
-/* ─────────────────────────── STATS SECTION ─────────────────────────── */
+/*                           ─ STATS SECTION                           ─ */
 const StatsSection = () => {
   const stats = [
     {num:"10K+", label:"Access Requests Processed"},
@@ -495,7 +495,7 @@ const StatsSection = () => {
   );
 };
 
-/* ─────────────────────────── HOW IT WORKS ─────────────────────────── */
+/*                           ─ HOW IT WORKS                           ─ */
 const HowItWorksSection = () => {
   const steps = [
     {
@@ -590,7 +590,7 @@ const HowItWorksSection = () => {
   );
 };
 
-/* ─────────────────────────── FEATURES SECTION ─────────────────────────── */
+/*                           ─ FEATURES SECTION                           ─ */
 const FeaturesSection = () => {
   const features = [
     {icon:"🤖",title:"AI Role Recommendation",desc:"Smart suggestions based on department, job title, and historical patterns from similar employees.",badge:"AI Powered"},
@@ -660,7 +660,7 @@ const FeaturesSection = () => {
   );
 };
 
-/* ─────────────────────────── ROLES SECTION ─────────────────────────── */
+/*                           ─ ROLES SECTION                           ─ */
 const RolesSection = () => {
   const [active, setActive] = useState(0);
   const roles = [
@@ -795,7 +795,7 @@ const RolesSection = () => {
   );
 };
 
-/* ─────────────────────────── SECURITY SECTION ─────────────────────────── */
+/*                           ─ SECURITY SECTION                           ─ */
 const SecuritySection = () => {
   const items = [
     {icon:"🔐",title:"JWT Authentication",desc:"Secure token-based sessions with auto-expiry and refresh handling."},
@@ -855,7 +855,7 @@ const SecuritySection = () => {
   );
 };
 
-/* ─────────────────────────── AI FEATURES SECTION ─────────────────────────── */
+/*                           ─ AI FEATURES SECTION                           ─ */
 const AISection = () => (
   <section style={{padding:"7rem 2rem",position:"relative",overflow:"hidden"}}>
     <div style={{
@@ -946,7 +946,7 @@ const AISection = () => (
   </section>
 );
 
-/* ─────────────────────────── TESTIMONIALS ─────────────────────────── */
+/*                           ─ TESTIMONIALS                           ─ */
 const TestimonialsSection = () => {
   const items = [
     {quote:"Sentinel cut our ERP onboarding from 3 days to under an hour. The AI role suggestions are surprisingly accurate.",name:"Sarah Chen",role:"IT Director, Nexara Group",avatar:"SC"},
@@ -1008,7 +1008,7 @@ const TestimonialsSection = () => {
   );
 };
 
-/* ─────────────────────────── FAQ SECTION ─────────────────────────── */
+/*                           ─ FAQ SECTION                           ─ */
 const FAQSection = () => {
   const [open, setOpen] = useState(null);
   const faqs = [
@@ -1060,7 +1060,7 @@ const FAQSection = () => {
   );
 };
 
-/* ─────────────────────────── CTA SECTION ─────────────────────────── */
+/*                           ─ CTA SECTION                           ─ */
 const CTASection = () => (
   <section style={{padding:"7rem 2rem",position:"relative",overflow:"hidden"}}>
     <div style={{
@@ -1114,7 +1114,7 @@ const CTASection = () => (
   </section>
 );
 
-/* ─────────────────────────── FOOTER ─────────────────────────── */
+/*                           ─ FOOTER                           ─ */
 const Footer = () => {
   const cols = [
     {title:"Product",links:["Features","How It Works","Pricing","Security","Changelog"]},
@@ -1205,7 +1205,7 @@ const Footer = () => {
   );
 };
 
-/* ─────────────────────────── SECTION WRAPPER ─────────────────────────── */
+/*                           ─ SECTION WRAPPER                           ─ */
 const AnimatedSection = ({children,id}) => {
   const ref = useRef(null);
   const [vis, setVis] = useState(false);
@@ -1225,7 +1225,7 @@ const AnimatedSection = ({children,id}) => {
   );
 };
 
-/* ─────────────────────────── APP ROOT ─────────────────────────── */
+/*                           ─ APP ROOT                           ─ */
 export default function LandingPage() {
   return (
     <>

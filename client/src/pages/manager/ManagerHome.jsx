@@ -12,7 +12,7 @@ const T = {
   approvedGrad:'linear-gradient(135deg,#10D988,#059669)',
 };
 
-/* ─── Skeleton ─── */
+/*   ─ Skeleton   ─ */
 const Skeleton = ({ w='100%', h='16px', r='6px' }) => (
   <div style={{
     width:w,height:h,borderRadius:r,
@@ -21,7 +21,7 @@ const Skeleton = ({ w='100%', h='16px', r='6px' }) => (
   }}/>
 );
 
-/* ─── Risk Badge ─── */
+/*   ─ Risk Badge   ─ */
 const RiskBadge = ({ level }) => {
   const map = {
     low:    { color:'#10D988', bg:'rgba(16,217,136,.1)'  },
@@ -42,7 +42,7 @@ const RiskBadge = ({ level }) => {
   );
 };
 
-/* ─── Metric Card ─── */
+/*   ─ Metric Card   ─ */
 const MetricCard = ({ label, value, icon, accentColor, loading, sub }) => (
   <div style={{
     background:T.surface,border:`1px solid ${T.border}`,
@@ -76,7 +76,7 @@ const MetricCard = ({ label, value, icon, accentColor, loading, sub }) => (
   </div>
 );
 
-/* ─── Approve/Reject modal ─── */
+/*   ─ Approve/Reject modal   ─ */
 const ActionModal = ({ req, onClose, onAction }) => {
   const [comment, setComment] = useState('');
   const [loading, setLoading] = useState(false);
@@ -203,7 +203,7 @@ const ActionModal = ({ req, onClose, onAction }) => {
   );
 };
 
-/* ─── Main Component ─── */
+/*   ─ Main Component   ─ */
 const ManagerHome = () => {
   const { user } = useAuth();
   const [stats,   setStats]   = useState(null);
@@ -268,7 +268,7 @@ const ManagerHome = () => {
         />
       )}
 
-      {/* ── Header ── */}
+      {/*    Header    */}
       <div style={{
         display:'flex',justifyContent:'space-between',alignItems:'flex-start',
         marginBottom:'2rem',flexWrap:'wrap',gap:'1rem',
@@ -308,7 +308,7 @@ const ManagerHome = () => {
         </Link>
       </div>
 
-      {/* ── Metric Cards ── */}
+      {/*    Metric Cards    */}
       <div style={{
         display:'grid',
         gridTemplateColumns:'repeat(auto-fit,minmax(200px,1fr))',
@@ -317,7 +317,7 @@ const ManagerHome = () => {
         {metrics.map(m=><MetricCard key={m.label} {...m} loading={loading}/>)}
       </div>
 
-      {/* ── Escalation alert ── */}
+      {/*    Escalation alert    */}
       {!loading && (stats?.pendingApprovals ?? 0) > 0 && (
         <div style={{
           background:'rgba(245,158,11,.08)',border:'1px solid rgba(245,158,11,.25)',
@@ -345,7 +345,7 @@ const ManagerHome = () => {
         </div>
       )}
 
-      {/* ── Pending Requests Table ── */}
+      {/*    Pending Requests Table    */}
       <div style={{
         background:T.surface,border:`1px solid ${T.border}`,
         borderRadius:'16px',overflow:'hidden',

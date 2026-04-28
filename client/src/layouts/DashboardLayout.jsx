@@ -102,7 +102,7 @@ const DashboardLayout = () => {
         @keyframes slideInRight{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
         @keyframes spin    {to{transform:rotate(360deg)}}
 
-        /* ── Sidebar nav: Sentinel teal (no purple!) ── */
+        /*    Sidebar nav: Sentinel teal (no purple!)    */
         .d-nav{display:flex;align-items:center;gap:.65rem;padding:.62rem 1rem;margin:.1rem .6rem;border-radius:9px;color:${T.slate};font-size:.87rem;font-weight:500;text-decoration:none;transition:all .2s;border-left:2.5px solid transparent;}
         .d-nav:hover{background:rgba(0,198,255,.06);color:${T.white};}
         .d-nav.active{background:rgba(0,198,255,.10);color:${T.teal};font-weight:600;border-left-color:${T.teal};}
@@ -131,7 +131,7 @@ const DashboardLayout = () => {
 
       <div style={{ display:'flex',flexDirection:'column',minHeight:'100vh' }}>
 
-        {/* ── TOP NAV ── */}
+        {/*    TOP NAV    */}
         <header style={{
           background:T.navyMid, borderBottom:`1px solid ${T.border}`,
           padding:'0 1.5rem', height:'60px',
@@ -280,11 +280,11 @@ const DashboardLayout = () => {
           </div>
         </header>
 
-        {/* ── BODY ── */}
+        {/*    BODY    */}
         <div style={{ display:'flex', flex:1, minHeight:0 }}>
           <div id="d-overlay" className={sidebarOpen ? 'open' : ''} onClick={()=>setSidebarOpen(false)}/>
 
-          {/* ── SIDEBAR ── */}
+          {/*    SIDEBAR    */}
           <aside id="d-sidebar" style={{
             width:'232px', background:T.navyMid,
             borderRight:`1px solid ${T.border}`,
@@ -335,14 +335,14 @@ const DashboardLayout = () => {
             </div>
           </aside>
 
-          {/* ── MAIN CONTENT ── */}
+          {/*    MAIN CONTENT    */}
           <main style={{ flex:1, background:T.navy, padding:'2rem', minWidth:0, overflowY:'auto' }}>
             <Breadcrumb links={links}/>
             <Outlet/>
           </main>
         </div>
 
-        {/* ── FOOTER ── */}
+        {/*    FOOTER    */}
         <footer style={{
           background:T.navyMid, borderTop:`1px solid ${T.border}`,
           padding:'.65rem 1.75rem',

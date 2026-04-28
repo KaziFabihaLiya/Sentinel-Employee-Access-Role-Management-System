@@ -2,7 +2,7 @@ const AccessRequest = require('../models/AccessRequest');
 const User          = require('../models/User');
 const AuditLog      = require('../models/AuditLog');
 
-// ── Helper: log to audit ────────────────────────────────────────────────────
+//    Helper: log to audit                                                     
 const audit = (req, action, resource, resourceId, details) =>
   AuditLog.create({
     userId:    req.user._id,
@@ -12,7 +12,7 @@ const audit = (req, action, resource, resourceId, details) =>
     ipAddress: req.ip || req.headers['x-forwarded-for'] || '—',
   }).catch(() => {});   // non-blocking — never crash on audit failure
 
-// ── Calculate risk score ────────────────────────────────────────────────────
+//    Calculate risk score                                                     
 const calcRisk = (requestedRole, accessDuration) => {
   const sensitiveKeywords = ['admin', 'finance', 'payroll', 'hr', 'database', 'root', 'superuser'];
   const roleLower = requestedRole.toLowerCase();
@@ -22,7 +22,7 @@ const calcRisk = (requestedRole, accessDuration) => {
   return 'low';
 };
 
-// ── POST /api/requests — Employee submits ──────────────────────────────────
+//    POST /api/requests — Employee submits                                   
 const submitRequest = async (req, res) => {
   try {
     const { department, jobTitle, requestedRole, justification, accessDuration } = req.body;
@@ -49,7 +49,7 @@ const submitRequest = async (req, res) => {
   }
 };
 
-// ── GET /api/requests/my — Employee gets own requests ──────────────────────
+//    GET /api/requests/my — Employee gets own requests                       
 const getMyRequests = async (req, res) => {
   try {
     const { status, page = 1, limit = 20 } = req.query;
@@ -69,7 +69,7 @@ const getMyRequests = async (req, res) => {
   }
 };
 
-// ── GET /api/requests/team — Manager gets team's pending requests ──────────
+//    GET /api/requests/team — Manager gets team's pending requests           
 const getTeamRequests = async (req, res) => {
   try {
     const { status = 'all', page = 1, limit = 20 } = req.query;
@@ -97,7 +97,7 @@ const getTeamRequests = async (req, res) => {
   }
 };
 
-// ── PATCH /api/requests/:id/review — Manager approves or rejects ──────────
+//    PATCH /api/requests/:id/review — Manager approves or rejects           
 const reviewRequest = async (req, res) => {
   try {
     const { status, managerComment } = req.body;
@@ -127,7 +127,7 @@ const reviewRequest = async (req, res) => {
   }
 };
 
-// ── GET /api/requests — Admin gets all requests ────────────────────────────
+//    GET /api/requests — Admin gets all requests                             
 const getAllRequests = async (req, res) => {
   try {
     const { limit = 20, status, page = 1 } = req.query;
@@ -148,7 +148,7 @@ const getAllRequests = async (req, res) => {
   }
 };
 
-// ── DELETE /api/requests/:id — Admin deletes request ──────────────────────
+//    DELETE /api/requests/:id — Admin deletes request                       
 const deleteRequest = async (req, res) => {
   try {
     const request = await AccessRequest.findByIdAndDelete(req.params.id);
@@ -163,7 +163,7 @@ const deleteRequest = async (req, res) => {
   }
 };
 
-// ── PATCH /api/requests/:id/revoke — Admin revokes approved access ────────
+//    PATCH /api/requests/:id/revoke — Admin revokes approved access         
 const revokeAccess = async (req, res) => {
   try {
     const request = await AccessRequest.findById(req.params.id);

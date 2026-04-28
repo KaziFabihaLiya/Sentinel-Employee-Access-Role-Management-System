@@ -164,7 +164,7 @@ const ProfilePage = () => {
         ))}
       </div>
 
-      {/* ── Account Info Tab ─────────────────────────────── */}
+      {/*    Account Info Tab                               ─ */}
       {tab === 'info' && (
         <div style={{ background:T.surface, border:`1px solid ${T.border}`, borderRadius:'16px', padding:'2rem' }}>
           <form onSubmit={handleProfileSave}>
@@ -245,7 +245,7 @@ const ProfilePage = () => {
         </div>
       )}
 
-      {/* ── Security Tab ─────────────────────────────────── */}
+      {/*    Security Tab                                   ─ */}
       {tab === 'security' && (
         <div style={{ background:T.surface, border:`1px solid ${T.border}`, borderRadius:'16px', padding:'2rem' }}>
           <h3 style={{ fontFamily:"'Syne',sans-serif", fontWeight:'700', fontSize:'1rem', marginBottom:'1.5rem' }}>

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router';
 import axiosInstance from '../../api/axiosInstance';
 
-// ── Design tokens (inline for portability) ────────────────────────────────
+//    Design tokens (inline for portability)                                 
 const T = {
   navy:        '#050D1F',
   navyMid:     '#0B1730',
@@ -22,7 +22,7 @@ const T = {
   rejected:    '#EF4444',
 };
 
-// ── Skeleton loader ───────────────────────────────────────────────────────
+//    Skeleton loader                                                       ─
 const Sk = ({ w = '100%', h = '16px', r = '6px' }) => (
   <div style={{
     width: w, height: h, borderRadius: r,
@@ -31,7 +31,7 @@ const Sk = ({ w = '100%', h = '16px', r = '6px' }) => (
   }} />
 );
 
-// ── Metric Card ───────────────────────────────────────────────────────────
+//    Metric Card    
 const MetricCard = ({ label, value, icon, accent, sub, loading, linkTo, linkLabel }) => (
   <div style={{
     background: T.surface, border: `1px solid ${T.border}`, borderRadius: '16px',
@@ -70,7 +70,7 @@ const MetricCard = ({ label, value, icon, accent, sub, loading, linkTo, linkLabe
   </div>
 );
 
-// ── Mini Bar Chart ────────────────────────────────────────────────────────
+//    Mini Bar Chart                                                         
 const MiniBarChart = ({ data, colorFn, height = 80 }) => {
   const max = Math.max(...data.map(d => d.value), 1);
   return (
@@ -109,7 +109,7 @@ const MiniBarChart = ({ data, colorFn, height = 80 }) => {
   );
 };
 
-// ── Status Badge ─────────────────────────────────────────────────────────
+//    Status Badge  
 const StatusBadge = ({ status }) => {
   const map = {
     Pending:  { color: T.pending,  bg: 'rgba(245,158,11,.12)'  },
@@ -130,7 +130,7 @@ const StatusBadge = ({ status }) => {
   );
 };
 
-// ── Role Badge ────────────────────────────────────────────────────────────
+//    Role Badge    ─
 const RoleBadge = ({ role }) => {
   const map = {
     employee: { color: T.teal,   bg: 'rgba(0,198,255,.1)'   },
@@ -147,7 +147,7 @@ const RoleBadge = ({ role }) => {
   );
 };
 
-// ── Toast ─────────────────────────────────────────────────────────────────
+//    Toast          
 const Toast = ({ msg, type }) => (
   <div style={{
     position: 'fixed', bottom: '2rem', right: '2rem', zIndex: 2000,
@@ -164,7 +164,7 @@ const Toast = ({ msg, type }) => (
   </div>
 );
 
-// ── Confirm Modal ─────────────────────────────────────────────────────────
+//    Confirm Modal  
 const ConfirmModal = ({ title, message, onConfirm, onCancel, danger = false }) => (
   <div style={{
     position: 'fixed', inset: 0, background: 'rgba(5,13,31,.85)',
@@ -200,10 +200,10 @@ const ConfirmModal = ({ title, message, onConfirm, onCancel, danger = false }) =
   </div>
 );
 
-// ─────────────────────────────────────────────────────────────────────────────
+//                      
 // MAIN: AdminHome
 // API: GET /api/dashboard/admin-stats → { totalEmployees, totalRequests, pendingApprovals, approvedRoles }
-// ─────────────────────────────────────────────────────────────────────────────
+//                      
 const AdminHome = () => {
   const [stats,       setStats]       = useState(null);
   const [users,       setUsers]       = useState([]);
@@ -353,7 +353,7 @@ const AdminHome = () => {
         />
       )}
 
-      {/* ── Page Header ────────────────────────────── */}
+      {/*    Page Header                                */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <div style={{
@@ -404,12 +404,12 @@ const AdminHome = () => {
         </div>
       </div>
 
-      {/* ── KPI Metric Cards ──────────────────────── */}
+      {/*    KPI Metric Cards                          */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(210px,1fr))', gap: '1.1rem', marginBottom: '2rem' }}>
         {metrics.map(m => <MetricCard key={m.label} {...m} loading={loadStats} />)}
       </div>
 
-      {/* ── Mid Row: Chart + Quick Links ─────────── */}
+      {/*    Mid Row: Chart + Quick Links           ─ */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', marginBottom: '1.5rem' }} className="admin-mid-grid">
 
         {/* Request activity chart */}
@@ -486,7 +486,7 @@ const AdminHome = () => {
         </div>
       </div>
 
-      {/* ── Quick Links ───────────────────────────── */}
+      {/*    Quick Links                             ─ */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: '1rem', marginBottom: '2rem' }}>
         {quickLinks.map(ql => (
           <Link key={ql.label} to={ql.to} style={{ textDecoration: 'none' }}>
@@ -512,7 +512,7 @@ const AdminHome = () => {
         ))}
       </div>
 
-      {/* ── Tab: Users Table / Recent Requests ───── */}
+      {/*    Tab: Users Table / Recent Requests     ─ */}
       <div style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: '16px', overflow: 'hidden' }}>
 
         {/* Tab header */}
@@ -562,7 +562,7 @@ const AdminHome = () => {
           )}
         </div>
 
-        {/* ── USERS TABLE ── */}
+        {/*    USERS TABLE    */}
         {tab === 'users' && (
           loadUsers ? (
             <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '.75rem' }}>
@@ -684,7 +684,7 @@ const AdminHome = () => {
           )
         )}
 
-        {/* ── RECENT REQUESTS TABLE ── */}
+        {/*    RECENT REQUESTS TABLE    */}
         {tab === 'requests' && (
           loadReqs ? (
             <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '.75rem' }}>
