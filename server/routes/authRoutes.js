@@ -9,21 +9,6 @@ router.post('/register', register);
 router.post('/login', login);
 router.get('/me', protect, getMe); // Protected — needs valid token
 
-// PUT /api/auth/profile — update name, department, jobTitle
-router.put('/profile', protect, async (req, res) => {
-  try {
-    const { fullName, department, jobTitle } = req.body;
-    const user = await User.findByIdAndUpdate(
-      req.user._id,
-      { fullName, department, jobTitle },
-      { new: true, select: '-password' }
-    );
-    res.json({ message: 'Profile updated', user });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
 // PUT /api/auth/change-password
 const bcrypt = require('bcryptjs');
 router.put('/change-password', protect, async (req, res) => {

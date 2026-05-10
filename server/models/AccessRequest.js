@@ -20,7 +20,7 @@ const accessRequestSchema = new mongoose.Schema(
       default: 'Pending',
     },
 
-    //    Auto-calculated on submission                                         ─
+    // ── Auto-calculated on submission ─────────────────────────────────────────
     riskLevel: {
       type:    String,
       enum:    ['low', 'medium', 'high'],

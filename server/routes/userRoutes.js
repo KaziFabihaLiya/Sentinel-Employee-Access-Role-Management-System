@@ -4,19 +4,64 @@ const router  = express.Router();
 const { protect, authorize } = require('../middleware/authMiddleware');
 const User = require('../models/User');
 const { createAuditLog } = require('../utils/auditHelper');
+const multer  = require('multer');
+const path    = require('path');
 
-// PATCH /api/users/profile — Any authenticated user updates own profile
-router.patch('/profile', protect, async (req, res) => {
+// Store uploads in /uploads folder, keep original extension
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, 'uploads/'),
+  filename:    (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    cb(null, `avatar-${req.user.id}-${Date.now()}${ext}`);
+  },
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: 2 * 1024 * 1024 }, // 2MB
+  fileFilter: (req, file, cb) => {
+    const allowed = /jpeg|jpg|png|webp/;
+    allowed.test(file.mimetype) ? cb(null, true) : cb(new Error('Images only'));
+  },
+});
+
+// PATCH /api/users/profile
+router.patch('/profile', protect, upload.single('avatar'), async (req, res) => {
   try {
     const { fullName, department, jobTitle } = req.body;
+
+    const updateData = { fullName, department, jobTitle };
+
+    // Only update avatarUrl if a new file was uploaded
+    if (req.file) {
+      updateData.avatarUrl = `/uploads/${req.file.filename}`;
+    }
+
     const user = await User.findByIdAndUpdate(
-      req.user.id, { fullName, department, jobTitle },
+      req.user.id,
+      updateData,
       { new: true, runValidators: true }
     ).select('-password');
+
     await createAuditLog(req, 'PROFILE_UPDATED', `${user.fullName} updated their profile`, `User:${user._id}`);
     res.json(user);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 });
+
+// // PATCH /api/users/profile — Any authenticated user updates own profile
+// router.patch('/profile', protect, async (req, res) => {
+//   try {
+//     const { fullName, department, jobTitle } = req.body;
+//     const user = await User.findByIdAndUpdate(
+//       req.user.id, { fullName, department, jobTitle },
+//       { new: true, runValidators: true }
+//     ).select('-password');
+//     await createAuditLog(req, 'PROFILE_UPDATED', `${user.fullName} updated their profile`, `User:${user._id}`);
+//     res.json(user);
+//   } catch (err) { res.status(500).json({ message: err.message }); }
+// });
 
 // PATCH /api/users/change-password — Any authenticated user
 router.patch('/change-password', protect, async (req, res) => {
@@ -36,7 +81,7 @@ router.patch('/change-password', protect, async (req, res) => {
   } catch (err) { res.status(500).json({ message: err.message }); }
 });
 
-//    Admin routes      ─
+// ── Admin routes ──────────────────────────────────────────────────────────────
 
 // GET /api/users — List all users
 router.get('/', protect, authorize('admin'), async (req, res) => {

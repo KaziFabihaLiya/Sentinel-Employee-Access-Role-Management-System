@@ -6,7 +6,7 @@ const AccessRequest = require('../models/AccessRequest');
 const User          = require('../models/User');
 const { createAuditLog } = require('../utils/auditHelper');
 
-//    Risk helper        
+// ── Risk helper ───────────────────────────────────────────────────────────────
 const calcRisk = (requestedRole = '', accessDuration = 'Permanent') => {
   const r = requestedRole.toLowerCase();
   if (['admin','database','finance','payroll','hr','root','superuser','dba','sysadmin','erp admin'].some(k=>r.includes(k))) return 'high';

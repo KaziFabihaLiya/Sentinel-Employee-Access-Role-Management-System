@@ -3,6 +3,18 @@ const User = require('../models/User');
 const jwt  = require('jsonwebtoken');
 const { createAuditLog } = require('../utils/auditHelper');
 
+const sanitizeUser = (user) => ({
+  id:         user._id,
+  fullName:   user.fullName,
+  email:      user.email,
+  role:       user.role,
+  department: user.department,
+  jobTitle:   user.jobTitle,
+  avatarUrl:  user.avatarUrl,
+  isActive:   user.isActive,
+  createdAt:  user.createdAt,
+});
+
 const generateToken = (user) =>
   jwt.sign(
     { id: user._id, role: user.role, email: user.email },
@@ -25,10 +37,7 @@ const register = async (req, res) => {
     req.user = user;
     await createAuditLog(req, 'USER_REGISTERED', `New user registered: ${user.fullName} (${user.email})`, `User:${user._id}`);
 
-    res.status(201).json({
-      message: 'Registration successful', token,
-      user: { id: user._id, fullName: user.fullName, email: user.email, role: user.role, department: user.department, jobTitle: user.jobTitle },
-    });
+    res.status(201).json({ message: 'Registration successful', token, user: sanitizeUser(user) });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -49,11 +58,8 @@ const login = async (req, res) => {
     const token = generateToken(user);
     req.user = user;
     await createAuditLog(req, 'USER_LOGIN', `${user.fullName} logged in`, `User:${user._id}`);
-
-    res.status(200).json({
-      message: 'Login successful', token,
-      user: { id: user._id, fullName: user.fullName, email: user.email, role: user.role, department: user.department, jobTitle: user.jobTitle },
-    });
+  
+    res.status(200).json({ message: 'Login successful', token, user: sanitizeUser(user) });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

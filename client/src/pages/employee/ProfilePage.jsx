@@ -53,7 +53,7 @@ const ProfilePage = () => {
     try {
       const res = await axiosInstance.patch('/users/profile', form);
       // Update auth context with fresh data
-      const token = localStorage.getItem('sentinel_token');
+      const token = localStorage.getItem('token');
       login(res.data, token);
       showToast('Profile updated successfully');
     } catch (err) {
