@@ -46,10 +46,14 @@ const GlobalStyles = () => (
     @keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-12px);}}
     @keyframes spin{to{transform:rotate(360deg);}}
     @keyframes shimmer{0%{background-position:-200% center;}100%{background-position:200% center;}}
-    @keyframes blink{0%,100%{opacity:1;}50%{opacity:0;}}
     @keyframes gridMove{0%{transform:translateY(0);}100%{transform:translateY(60px);}}
     @keyframes borderGlow{0%,100%{box-shadow:0 0 8px rgba(0,198,255,.3);}50%{box-shadow:0 0 24px rgba(0,255,209,.5);}}
     @keyframes countUp{from{opacity:0;transform:scale(.8);}to{opacity:1;transform:scale(1);}}
+    @keyframes marquee{from{transform:translateX(0);}to{transform:translateX(-50%);}}
+    @keyframes flowDash{from{stroke-dashoffset:120;}to{stroke-dashoffset:0;}}
+    @keyframes signalSweep{0%{transform:translateX(-120%);opacity:0;}15%{opacity:1;}85%{opacity:1;}100%{transform:translateX(120%);opacity:0;}}
+    @keyframes nodePing{0%,100%{box-shadow:0 0 0 0 rgba(0,198,255,.38);}50%{box-shadow:0 0 0 14px rgba(0,198,255,0);}}
+    @keyframes panelTilt{0%,100%{transform:translateY(0) rotateX(0deg);}50%{transform:translateY(-8px) rotateX(3deg);}}
 
     .hero-animate{animation:fadeUp .8s ease forwards;}
     .hero-animate-2{animation:fadeUp .9s .15s ease forwards;opacity:0;}
@@ -300,152 +304,263 @@ const GridBg = () => (
 
 /*                           ─ HERO SECTION                           ─ */
 const HeroSection = () => {
-  const [typed, setTyped] = useState("");
-  const words = ["Employees","Managers","Administrators"];
-  const [wi, setWi] = useState(0);
-  const [charI, setCharI] = useState(0);
-  const [del, setDel] = useState(false);
+  const [activeNode, setActiveNode] = useState(1);
+  const [pointer, setPointer] = useState({ x: 50, y: 48 });
 
-  useEffect(()=>{
-    const word = words[wi];
-    const speed = del ? 45 : 85;
-    const timer = setTimeout(()=>{
-      if(!del && charI < word.length){
-        setTyped(word.slice(0,charI+1));setCharI(c=>c+1);
-      } else if(!del && charI===word.length){
-        setTimeout(()=>setDel(true),1200);
-      } else if(del && charI>0){
-        setTyped(word.slice(0,charI-1));setCharI(c=>c-1);
-      } else {
-        setDel(false);setWi((wi+1)%words.length);
-      }
-    },speed);
-    return()=>clearTimeout(timer);
-  },[typed,charI,del,wi]);
+  const nodes = [
+    { label:"Employee", status:"Request", x:15, y:58, color:T.teal },
+    { label:"Manager", status:"Review", x:48, y:32, color:T.cyan },
+    { label:"Admin", status:"Grant", x:80, y:57, color:"#A78BFA" },
+  ];
+  const marqueeItems = [
+    "Zero-trust approvals",
+    "SLA escalation",
+    "Audit-ready trails",
+    "Least-privilege roles",
+    "Local RAG assistant",
+    "Manager queues",
+    "Risk scoring",
+  ];
+
+  const onHeroMove = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setPointer({
+      x: Math.round(((e.clientX - rect.left) / rect.width) * 100),
+      y: Math.round(((e.clientY - rect.top) / rect.height) * 100),
+    });
+  };
 
   return (
     <section id="home" style={{
       position:"relative",minHeight:"100vh",
       display:"flex",alignItems:"center",justifyContent:"center",
-      padding:"8rem 2rem 5rem",overflow:"hidden",
-    }}>
+      padding:"8rem 2rem 2.5rem",overflow:"hidden",
+      background:`radial-gradient(circle at ${pointer.x}% ${pointer.y}%,rgba(0,198,255,.13),transparent 28%),${T.navy}`,
+    }} onMouseMove={onHeroMove}>
       <GridBg/>
 
-      {/* Floating orbs */}
-      <div className="float-el" style={{
-        position:"absolute",top:"18%",right:"8%",
-        width:"320px",height:"320px",borderRadius:"50%",
-        background:"radial-gradient(circle,rgba(0,198,255,.1) 0%,transparent 70%)",
-        border:`1px solid rgba(0,198,255,.15)`,
-      }}/>
-      <div className="float-el" style={{
-        position:"absolute",bottom:"15%",left:"5%",
-        width:"200px",height:"200px",borderRadius:"50%",
-        background:"radial-gradient(circle,rgba(0,255,209,.07) 0%,transparent 70%)",
-        animationDelay:"1.5s",
-      }}/>
-
-      {/* Decorative badge top-right */}
-      <div style={{
-        position:"absolute",top:"22%",right:"12%",
-        background:T.navyCard,border:`1px solid ${T.border}`,
-        borderRadius:"14px",padding:"1rem 1.25rem",
-        animation:"fadeIn 1s .8s ease forwards",opacity:0,
-        boxShadow:T.shadow,
-      }} className="hide-mobile">
-        <div style={{display:"flex",alignItems:"center",gap:".5rem",marginBottom:".4rem"}}>
-          <span style={{width:"8px",height:"8px",borderRadius:"50%",background:"#10D988",display:"inline-block",boxShadow:"0 0 8px #10D988"}}/>
-          <span style={{fontSize:".72rem",color:T.slate}}>Request #2847</span>
-        </div>
-        <div style={{fontSize:".82rem",fontWeight:"600"}}>Finance Role Access</div>
-        <div style={{
-          marginTop:".5rem",padding:".25rem .7rem",borderRadius:"100px",
-          background:"rgba(16,217,136,.12)",color:"#10D988",
-          fontSize:".72rem",fontWeight:"600",display:"inline-block",
-        }}>✓ Approved in 4 min</div>
-      </div>
-
-      {/* Risk badge left */}
-      <div style={{
-        position:"absolute",top:"45%",left:"6%",
-        background:T.navyCard,border:`1px solid ${T.border}`,
-        borderRadius:"14px",padding:".9rem 1.1rem",
-        animation:"fadeIn 1s 1.1s ease forwards",opacity:0,
-        boxShadow:T.shadow,
-      }} className="hide-mobile">
-        <div style={{fontSize:".72rem",color:T.slate,marginBottom:".3rem"}}>Risk Score</div>
-        <div style={{
-          fontSize:"1.5rem",fontWeight:"800",fontFamily:"'Syne',sans-serif",
-          background:T.accent,WebkitBackgroundClip:"text",
-          WebkitTextFillColor:"transparent",backgroundClip:"text",
-        }}>Low</div>
-        <div style={{display:"flex",gap:"3px",marginTop:".4rem"}}>
-          {[1,2,3,4,5].map(i=>(
-            <div key={i} style={{width:"18px",height:"5px",borderRadius:"3px",
-              background:i<=2?"#10D988":T.border,
-              transition:"background .3s"}}/>
-          ))}
-        </div>
-      </div>
-
       {/* Main content */}
-      <div style={{position:"relative",zIndex:1,textAlign:"center",maxWidth:"860px"}}>
-        <div className="hero-animate">
-          <span className="section-tag">
-            <span className="pulse-el" style={{width:"7px",height:"7px",borderRadius:"50%",background:T.teal,display:"inline-block"}}/>
-            Enterprise Access Management Platform
-          </span>
-        </div>
+      <div style={{position:"relative",zIndex:1,width:"100%",maxWidth:"1280px"}}>
+        <div style={{
+          display:"grid",
+          gridTemplateColumns:"minmax(0,1fr) minmax(360px,.92fr)",
+          gap:"4rem",
+          alignItems:"center",
+        }} className="stack-mobile">
+          <div style={{maxWidth:"700px"}}>
+            <div className="hero-animate">
+              <span className="section-tag">
+                <span className="pulse-el" style={{width:"7px",height:"7px",borderRadius:"50%",background:T.teal,display:"inline-block"}}/>
+                Enterprise Access Command Center
+              </span>
+            </div>
 
-        <h1 className="hero-animate-2" style={{
-          fontFamily:"'Syne',sans-serif",
-          fontSize:"clamp(2.5rem,6vw,4.2rem)",
-          fontWeight:"800",
-          lineHeight:1.1,
-          letterSpacing:"-.03em",
-          marginBottom:"1.5rem",
-        }}>
-          Secure ERP Access<br/>
-          <span className="gradient-text">Built for </span>
-          <span style={{
-            background:T.accent,WebkitBackgroundClip:"text",
-            WebkitTextFillColor:"transparent",backgroundClip:"text",
-          }}>{typed}</span>
-          <span style={{
-            borderRight:`2px solid ${T.teal}`,
-            marginLeft:"2px",
-            animation:"blink 1s step-end infinite",
-            display:"inline-block",height:"1em",verticalAlign:"middle",
-          }}/>
-        </h1>
-
-        <p className="hero-animate-3" style={{
-          fontSize:"clamp(1rem,2vw,1.2rem)",
-          color:T.slate,lineHeight:1.7,
-          maxWidth:"600px",margin:"0 auto 2.5rem",
-        }}>
-          Automate role requests, streamline approvals, and enforce compliance — all in one AI-powered platform with real-time audit trails.
-        </p>
-
-        <div className="hero-animate-4" style={{display:"flex",gap:"1rem",justifyContent:"center",flexWrap:"wrap"}}>
-          <button className="btn-primary" style={{fontSize:"1rem",padding:"1rem 2.25rem"}}>
-            Start Free Trial →
-          </button>
-          <button className="btn-secondary" style={{fontSize:"1rem",padding:"1rem 2.25rem",display:"flex",alignItems:"center",gap:".5rem"}}>
-            ▶ Watch Demo
-          </button>
-        </div>
-
-        {/* Trust line */}
-        <div style={{marginTop:"2.5rem",display:"flex",alignItems:"center",justifyContent:"center",gap:"1.5rem",flexWrap:"wrap"}}>
-          {["No credit card","SOC 2 Compliant","99.9% Uptime"].map(t=>(
-            <span key={t} style={{
-              display:"flex",alignItems:"center",gap:".4rem",
-              fontSize:".82rem",color:T.slate,
+            <h1 className="hero-animate-2" style={{
+              fontFamily:"'Syne',sans-serif",
+              fontSize:"clamp(2.6rem,6vw,5.2rem)",
+              fontWeight:"800",
+              lineHeight:1.02,
+              letterSpacing:"-.03em",
+              marginBottom:"1.5rem",
             }}>
-              <span style={{color:T.teal}}>✓</span> {t}
-            </span>
-          ))}
+              Grant access with<br/>
+              <span className="gradient-text">live approval intelligence.</span>
+            </h1>
+
+            <p className="hero-animate-3" style={{
+              fontSize:"clamp(1rem,2vw,1.16rem)",
+              color:T.slate,lineHeight:1.75,
+              maxWidth:"620px",marginBottom:"2.25rem",
+            }}>
+              Replace static access forms with a real-time control surface for requests, risk, escalation, audit trails, and local AI guidance.
+            </p>
+
+            <div className="hero-animate-4" style={{display:"flex",gap:"1rem",flexWrap:"wrap"}}>
+              <Link to="/register"><button className="btn-primary" style={{fontSize:"1rem",padding:"1rem 2.25rem"}}>
+                Start Free Trial
+              </button></Link>
+              <Link to="/login"><button className="btn-secondary" style={{fontSize:"1rem",padding:"1rem 2.25rem"}}>
+                Open Console
+              </button></Link>
+            </div>
+
+            <div style={{marginTop:"2.2rem",display:"grid",gridTemplateColumns:"repeat(3,minmax(120px,1fr))",gap:".8rem",maxWidth:"560px"}} className="hero-metrics">
+              {[
+                {k:"4m",v:"avg approval"},
+                {k:"99.9%",v:"uptime SLA"},
+                {k:"0",v:"missed trails"},
+              ].map(item=>(
+                <div key={item.v} style={{
+                  border:`1px solid ${T.border}`,
+                  background:"rgba(15,30,56,.58)",
+                  borderRadius:"12px",
+                  padding:".85rem 1rem",
+                  backdropFilter:"blur(14px)",
+                  overflow:"hidden",
+                  position:"relative",
+                }}>
+                  <div style={{
+                    position:"absolute",inset:0,
+                    background:"linear-gradient(90deg,transparent,rgba(0,198,255,.08),transparent)",
+                    animation:"signalSweep 4s ease-in-out infinite",
+                  }}/>
+                  <div style={{fontFamily:"'Syne',sans-serif",fontSize:"1.35rem",fontWeight:800,color:T.white,position:"relative"}}>{item.k}</div>
+                  <div style={{fontSize:".72rem",color:T.slate,position:"relative"}}>{item.v}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="hero-animate-3" style={{
+            position:"relative",
+            minHeight:"470px",
+            perspective:"1000px",
+          }}>
+            <div style={{
+              position:"absolute",
+              inset:"5% 0 0 0",
+              transform:`rotateX(58deg) rotateZ(-18deg) translate3d(${(pointer.x-50)*.05}px,${(pointer.y-50)*.05}px,0)`,
+              transformOrigin:"center",
+              border:`1px solid ${T.border}`,
+              backgroundImage:`
+                linear-gradient(rgba(0,198,255,.08) 1px,transparent 1px),
+                linear-gradient(90deg,rgba(0,198,255,.08) 1px,transparent 1px)
+              `,
+              backgroundSize:"42px 42px",
+              borderRadius:"22px",
+              boxShadow:"0 34px 90px rgba(0,0,0,.38)",
+              opacity:.9,
+            }}/>
+
+            <svg viewBox="0 0 520 320" style={{position:"absolute",inset:"4rem 0 auto 0",width:"100%",height:"300px",overflow:"visible"}}>
+              <defs>
+                <linearGradient id="heroLine" x1="0" x2="1">
+                  <stop offset="0%" stopColor="#00C6FF"/>
+                  <stop offset="55%" stopColor="#00FFD1"/>
+                  <stop offset="100%" stopColor="#A78BFA"/>
+                </linearGradient>
+              </defs>
+              <path d="M82 196 C 175 95, 278 95, 438 194" fill="none" stroke="url(#heroLine)" strokeWidth="3" strokeLinecap="round" strokeDasharray="10 13" style={{animation:"flowDash 3.4s linear infinite"}}/>
+              <path d="M94 204 C 210 255, 310 255, 430 204" fill="none" stroke="rgba(0,198,255,.24)" strokeWidth="1.5" strokeLinecap="round" strokeDasharray="5 12" style={{animation:"flowDash 4.8s linear infinite reverse"}}/>
+            </svg>
+
+            {nodes.map((node,index)=>(
+              <button
+                key={node.label}
+                type="button"
+                onMouseEnter={()=>setActiveNode(index)}
+                onFocus={()=>setActiveNode(index)}
+                style={{
+                  position:"absolute",
+                  left:`${node.x}%`,
+                  top:`${node.y}%`,
+                  transform:"translate(-50%,-50%)",
+                  width:activeNode===index?"152px":"132px",
+                  minHeight:"112px",
+                  borderRadius:"18px",
+                  border:`1px solid ${activeNode===index ? node.color : T.border}`,
+                  background:"rgba(11,23,48,.82)",
+                  color:T.white,
+                  backdropFilter:"blur(18px)",
+                  boxShadow:activeNode===index ? `0 18px 48px ${node.color}24` : T.shadow,
+                  cursor:"pointer",
+                  transition:"all .28s ease",
+                  animation:activeNode===index ? "nodePing 2.4s ease-in-out infinite" : "none",
+                  textAlign:"left",
+                  padding:"1rem",
+                }}
+              >
+                <span style={{
+                  display:"block",
+                  width:"10px",height:"10px",borderRadius:"50%",
+                  background:node.color,
+                  boxShadow:`0 0 16px ${node.color}`,
+                  marginBottom:".85rem",
+                }}/>
+                <span style={{display:"block",fontFamily:"'Syne',sans-serif",fontWeight:800,fontSize:"1rem",marginBottom:".25rem"}}>
+                  {node.label}
+                </span>
+                <span style={{display:"block",color:T.slate,fontSize:".74rem"}}>{node.status}</span>
+              </button>
+            ))}
+
+            <div style={{
+              position:"absolute",
+              right:"3%",
+              top:"8%",
+              width:"250px",
+              border:`1px solid ${T.borderH}`,
+              background:"rgba(15,30,56,.78)",
+              borderRadius:"18px",
+              padding:"1rem",
+              backdropFilter:"blur(18px)",
+              animation:"panelTilt 5s ease-in-out infinite",
+              boxShadow:T.shadowH,
+            }} className="hide-mobile">
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:".8rem"}}>
+                <span style={{fontSize:".72rem",color:T.slate,textTransform:"uppercase",letterSpacing:".1em"}}>Live packet</span>
+                <span style={{fontSize:".7rem",color:"#10D988"}}>approved</span>
+              </div>
+              <div style={{fontFamily:"'Syne',sans-serif",fontWeight:800,marginBottom:".55rem"}}>Finance Analyst Access</div>
+              <div style={{height:"7px",background:T.border,borderRadius:"100px",overflow:"hidden"}}>
+                <div style={{height:"100%",width:`${activeNode===0?34:activeNode===1?68:100}%`,background:T.accent,borderRadius:"100px",transition:"width .4s ease"}}/>
+              </div>
+              <div style={{display:"flex",justifyContent:"space-between",color:T.muted,fontSize:".68rem",marginTop:".55rem"}}>
+                <span>request</span><span>review</span><span>grant</span>
+              </div>
+            </div>
+
+            <div style={{
+              position:"absolute",
+              left:"2%",
+              bottom:"8%",
+              width:"210px",
+              border:`1px solid ${T.border}`,
+              background:"rgba(15,30,56,.72)",
+              borderRadius:"16px",
+              padding:".95rem",
+              backdropFilter:"blur(18px)",
+            }} className="hide-mobile">
+              <div style={{fontSize:".72rem",color:T.slate,marginBottom:".45rem"}}>Risk posture</div>
+              <div style={{display:"flex",alignItems:"center",gap:".7rem"}}>
+                <div style={{fontFamily:"'Syne',sans-serif",fontWeight:800,fontSize:"1.45rem",color:T.cyan}}>Low</div>
+                <div style={{flex:1,display:"flex",gap:"3px"}}>
+                  {[0,1,2,3,4].map(i=><span key={i} style={{height:"7px",flex:1,borderRadius:"5px",background:i<2?"#10D988":T.border}}/> )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style={{
+          marginTop:"4.5rem",
+          borderTop:`1px solid ${T.border}`,
+          borderBottom:`1px solid ${T.border}`,
+          overflow:"hidden",
+          maskImage:"linear-gradient(90deg,transparent,#000 10%,#000 90%,transparent)",
+          WebkitMaskImage:"linear-gradient(90deg,transparent,#000 10%,#000 90%,transparent)",
+        }}>
+          <div style={{
+            display:"flex",
+            width:"max-content",
+            animation:"marquee 24s linear infinite",
+          }}>
+            {[...marqueeItems,...marqueeItems].map((item,index)=>(
+              <div key={`${item}-${index}`} style={{
+                display:"flex",
+                alignItems:"center",
+                gap:".85rem",
+                padding:"1rem 1.4rem",
+                color:T.slate,
+                fontSize:".85rem",
+                letterSpacing:".02em",
+                whiteSpace:"nowrap",
+              }}>
+                <span style={{width:"7px",height:"7px",borderRadius:"50%",background:index%2?T.cyan:T.teal,boxShadow:`0 0 12px ${index%2?T.cyan:T.teal}`}}/>
+                {item}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </section>

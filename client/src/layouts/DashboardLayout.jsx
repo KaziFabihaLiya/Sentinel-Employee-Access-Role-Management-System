@@ -4,6 +4,7 @@ import { Outlet, NavLink, useNavigate, useLocation } from 'react-router';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import axiosInstance from '../api/axiosInstance';
+import ChatbotWidget from '../components/ChatbotWidget';
 
 const T = {
   navy:'#050D1F',navyMid:'#0B1730',surface:'#0F1E38',
@@ -303,6 +304,7 @@ const DashboardLayout = () => {
             <Breadcrumb links={links}/>
             <Outlet/>
           </main>
+          <ChatbotWidget />
         </div>
 
         {/* FOOTER */}
