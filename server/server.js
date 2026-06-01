@@ -20,6 +20,7 @@ app.use('/api/requests',      require('./routes/requestRoutes'));
 app.use('/api/roles',         require('./routes/roleRoutes'));
 app.use('/api/audit',         require('./routes/auditRoutes'));
 app.use('/api/notifications', require('./routes/notificationRoutes'));
+app.use('/api/chatbot', require('./routes/chatbotRoutes'));
 app.get('/api/health', (req, res) => res.json({ status:'OK', project:'Sentinel — EARMS', time: new Date().toISOString() }));
 app.use((req, res) => res.status(404).json({ message: `Route ${req.originalUrl} not found` }));
 app.use((err, req, res, next) => { console.error('❌', err.stack); res.status(err.status||500).json({ message: err.message||'Internal server error' }); });
