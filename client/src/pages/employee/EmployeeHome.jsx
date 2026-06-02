@@ -13,7 +13,7 @@ const T = {
   rejectedGrad:'linear-gradient(135deg,#EF4444,#DC2626)',
 };
 
-/* ─── Skeleton loader ─── */
+/*   ─ Skeleton loader   ─ */
 const Skeleton = ({ w='100%', h='20px', r='6px' }) => (
   <div style={{
     width:w,height:h,borderRadius:r,
@@ -23,7 +23,7 @@ const Skeleton = ({ w='100%', h='20px', r='6px' }) => (
   }}/>
 );
 
-/* ─── Status Badge ─── */
+/*   ─ Status Badge   ─ */
 const StatusBadge = ({ status }) => {
   const map = {
     pending:  { color:'#F59E0B', bg:'rgba(245,158,11,.12)',  label:'Pending'  },
@@ -45,7 +45,7 @@ const StatusBadge = ({ status }) => {
   );
 };
 
-/* ─── Metric Card ─── */
+/*   ─ Metric Card   ─ */
 const MetricCard = ({ label, value, icon, accentColor, loading, delta }) => (
   <div style={{
     background:T.surface,border:`1px solid ${T.border}`,borderRadius:'16px',
@@ -86,7 +86,7 @@ const MetricCard = ({ label, value, icon, accentColor, loading, delta }) => (
   </div>
 );
 
-/* ─── Risk Badge ─── */
+/*   ─ Risk Badge   ─ */
 const RiskBadge = ({ level }) => {
   const map = {
     low:    { color:'#10D988', bg:'rgba(16,217,136,.1)',  bars:2 },
@@ -104,7 +104,7 @@ const RiskBadge = ({ level }) => {
   );
 };
 
-/* ─── Main Component ─── */
+/*   ─ Main Component   ─ */
 const EmployeeHome = () => {
   const { user } = useAuth();
   const [stats,   setStats]   = useState(null);
@@ -129,7 +129,7 @@ const EmployeeHome = () => {
   return (
     <div style={{animation:'fadeUp .5s ease'}}>
 
-      {/* ── Header ── */}
+      {/*    Header    */}
       <div style={{
         display:'flex',justifyContent:'space-between',alignItems:'flex-start',
         marginBottom:'2rem',flexWrap:'wrap',gap:'1rem',
@@ -170,7 +170,7 @@ const EmployeeHome = () => {
         </Link>
       </div>
 
-      {/* ── Metric Cards ── */}
+      {/*    Metric Cards    */}
       <div style={{
         display:'grid',
         gridTemplateColumns:'repeat(auto-fit,minmax(200px,1fr))',
@@ -179,7 +179,7 @@ const EmployeeHome = () => {
         {metrics.map(m=><MetricCard key={m.label} {...m} loading={loading}/>)}
       </div>
 
-      {/* ── Bottom grid ── */}
+      {/*    Bottom grid    */}
       <div style={{display:'grid',gridTemplateColumns:'1fr 260px',gap:'1.25rem',alignItems:'start'}} className="emp-bottom-grid">
 
         {/* Recent Requests Table */}
