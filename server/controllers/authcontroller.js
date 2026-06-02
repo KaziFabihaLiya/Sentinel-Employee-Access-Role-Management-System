@@ -1,108 +1,131 @@
+// server/controllers/authController.js
 const User = require('../models/User');
-const jwt = require('jsonwebtoken');
+const jwt  = require('jsonwebtoken');
+const { createAuditLog } = require('../utils/auditHelper');
 
-// Helper: Generate JWT token
-const generateToken = (user) => {
-  return jwt.sign(
-    {
-      id: user._id,
-      role: user.role,
-      email: user.email,
-    },
+const sanitizeUser = (user) => ({
+  id:         user._id,
+  fullName:   user.fullName,
+  email:      user.email,
+  role:       user.role,
+  department: user.department,
+  jobTitle:   user.jobTitle,
+  avatarUrl:  user.avatarUrl,
+  isActive:   user.isActive,
+  createdAt:  user.createdAt,
+});
+
+const generateToken = (user) =>
+  jwt.sign(
+    { id: user._id, role: user.role, email: user.email },
     process.env.JWT_SECRET,
-    { expiresIn: process.env.JWT_EXPIRE }
-    
+    { expiresIn: process.env.JWT_EXPIRE || '7d' }
   );
-};
-console.log("JWT SECRET:", process.env.JWT_SECRET);
-// ─── REGISTER ────────────────────────────────────────────────────
+
 // POST /api/auth/register
 const register = async (req, res) => {
   try {
     const { fullName, email, department, jobTitle, password } = req.body;
 
-    // Check if email already exists
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ message: 'Email already registered' });
-    }
+    const existing = await User.findOne({ email });
+    if (existing) return res.status(400).json({ message: 'Email already registered' });
 
-    // Create user (password is auto-hashed by the model)
-    const user = await User.create({
-      fullName,
-      email,
-      department,
-      jobTitle,
-      password,
-    });
-
+    const user = await User.create({ fullName, email, department, jobTitle, password });
     const token = generateToken(user);
 
-    res.status(201).json({
-      message: 'Registration successful',
-      token,
-      user: {
-        id: user._id,
-        fullName: user.fullName,
-        email: user.email,
-        role: user.role,
-        department: user.department,
-        jobTitle: user.jobTitle,
-      },
-    });
+    // Attach user to req for audit log
+    req.user = user;
+    await createAuditLog(req, 'USER_REGISTERED', `New user registered: ${user.fullName} (${user.email})`, `User:${user._id}`);
+
+    res.status(201).json({ message: 'Registration successful', token, user: sanitizeUser(user) });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// ─── LOGIN ───────────────────────────────────────────────────────
 // POST /api/auth/login
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Find user by email
     const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(401).json({ message: 'Invalid email or password' });
-    }
+    if (!user)         return res.status(401).json({ message: 'Invalid email or password' });
+    if (!user.isActive) return res.status(403).json({ message: 'Account is deactivated. Contact your administrator.' });
 
-    // Check if user is active
-    if (!user.isActive) {
-      return res.status(403).json({ message: 'Account is deactivated' });
-    }
-
-    // Compare password
     const isMatch = await user.matchPassword(password);
-    if (!isMatch) {
-      return res.status(401).json({ message: 'Invalid email or password' });
+    if (!isMatch) return res.status(401).json({ message: 'Invalid email or password' });
+
+    const token = generateToken(user);
+    req.user = user;
+    await createAuditLog(req, 'USER_LOGIN', `${user.fullName} logged in`, `User:${user._id}`);
+  
+    res.status(200).json({ message: 'Login successful', token, user: sanitizeUser(user) });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// POST /api/auth/google — Handle Google OAuth callback
+const googleLogin = async (req, res) => {
+  try {
+    const { googleId, email, displayName, photoUrl } = req.body;
+
+    if (!googleId || !email) {
+      return res.status(400).json({ message: 'Missing Google ID or email' });
+    }
+
+    // Find user by googleId first
+    let user = await User.findOne({ googleId });
+
+    if (!user) {
+      // Try to find by email (existing user linking Google)
+      user = await User.findOne({ email });
+
+      if (user) {
+        // Link Google account to existing user
+        user.googleId = googleId;
+        user.authProvider = 'google';
+        if (photoUrl) user.avatarUrl = photoUrl;
+        await user.save();
+      } else {
+        // Create new user from Google data
+        user = await User.create({
+          googleId,
+          email,
+          fullName: displayName || email.split('@')[0],
+          avatarUrl: photoUrl || '',
+          authProvider: 'google',
+          password: null, // No password for OAuth users
+          department: '',
+          jobTitle: '',
+        });
+
+        req.user = user;
+        await createAuditLog(req, 'USER_REGISTERED', `New user registered via Google: ${user.fullName}`, `User:${user._id}`);
+      }
+    }
+
+    if (!user.isActive) {
+      return res.status(403).json({ message: 'Account is deactivated. Contact your administrator.' });
     }
 
     const token = generateToken(user);
-    console.log("JWT SECRET:", process.env.JWT_SECRET);
+    req.user = user;
+    await createAuditLog(req, 'USER_LOGIN', `${user.fullName} logged in via Google`, `User:${user._id}`);
 
     res.status(200).json({
-      message: 'Login successful',
+      message: 'Google login successful',
       token,
-      user: {
-        id: user._id,
-        fullName: user.fullName,
-        email: user.email,
-        role: user.role,
-        department: user.department,
-        jobTitle: user.jobTitle,
-      },
+      user: sanitizeUser(user),
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// ─── GET CURRENT USER ────────────────────────────────────────────
-// GET /api/auth/me  (protected route)
+// GET /api/auth/me
 const getMe = async (req, res) => {
   try {
-    // req.user is set by the auth middleware
     const user = await User.findById(req.user.id).select('-password');
     res.status(200).json(user);
   } catch (error) {
@@ -110,4 +133,4 @@ const getMe = async (req, res) => {
   }
 };
 
-module.exports = { register, login, getMe };
+module.exports = { register, login, googleLogin, getMe };

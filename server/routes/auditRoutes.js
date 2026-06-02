@@ -1,26 +1,31 @@
+// server/routes/auditRoutes.js
 const express  = require('express');
 const router   = express.Router();
-const AuditLog = require('../models/AuditLog');
 const { protect, authorize } = require('../middleware/authMiddleware');
+const AuditLog = require('../models/AuditLog');
 
-// GET /api/audit?page=1&action=&user=
+// GET /api/audit — Admin only, paginated, filterable
 router.get('/', protect, authorize('admin'), async (req, res) => {
   try {
-    const { page = 1, limit = 30, action, user } = req.query;
+    const page   = Math.max(1, parseInt(req.query.page)  || 1);
+    const limit  = Math.min(100, parseInt(req.query.limit) || 25);
+    const skip   = (page - 1) * limit;
+
     const filter = {};
-    if (action && action !== 'all') filter.action = action;
-    if (user) filter.$or = [
-      { userName:  { $regex: user, $options: 'i' } },
-      { userEmail: { $regex: user, $options: 'i' } },
-    ];
+    if (req.query.action && req.query.action !== 'all') filter.action = req.query.action;
+    if (req.query.user) {
+      filter.$or = [
+        { userName:  { $regex: req.query.user, $options: 'i' } },
+        { userEmail: { $regex: req.query.user, $options: 'i' } },
+      ];
+    }
 
-    const total = await AuditLog.countDocuments(filter);
-    const logs  = await AuditLog.find(filter)
-      .sort({ createdAt: -1 })
-      .skip((page - 1) * limit)
-      .limit(Number(limit));
+    const [logs, total] = await Promise.all([
+      AuditLog.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
+      AuditLog.countDocuments(filter),
+    ]);
 
-    res.json({ logs, total, page: Number(page), pages: Math.ceil(total / limit) });
+    res.json({ logs, total, page, pages: Math.ceil(total / limit) });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
