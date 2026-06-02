@@ -33,68 +33,139 @@ router.get('/', protect, async (req, res) => {
 
       const pendingCnt = await AccessRequest.countDocuments({ employee: req.user.id, status: 'Pending' });
       if (pendingCnt > 0) {
-        notifications.push({ id:'emp-pending', type:'info', icon:'clock', title:`${pendingCnt} Pending Request${pendingCnt>1?'s':''}`, msg:`Awaiting manager review.`, time: now, link:'/dashboard/my-requests', urgent:false });
+        notifications.push({ 
+          id:'emp-pending', 
+          type:'info', 
+          icon:'clock', 
+          title:`${pendingCnt} Pending Request${pendingCnt>1?'s':''}`, 
+          msg:`Awaiting manager review.`, 
+          time: now, 
+          link:'/dashboard/my-requests', 
+          urgent:false 
+        });
       }
     }
 
+    // ==================== FIXED MANAGER SECTION ====================
     if (role === 'manager') {
-      const teamEmps = await User.find({ department: req.user.department, role:'employee', isActive:true }).select('_id');
-      const empIds   = teamEmps.map(e => e._id);
-      const pendingReqs = await AccessRequest.find({ employee:{ $in:empIds }, status:'Pending' }).sort({ createdAt:1 }).limit(15).populate('employee','fullName');
+      const now = new Date();
+
+      // NEW: Use currentApproverIds + fallback for legacy requests
+      const pendingReqs = await AccessRequest.find({
+        status: 'Pending',
+        $or: [
+          { currentApproverIds: req.user._id },                    // Multi-level system
+          { 
+            employee: { $in: (await User.find({ 
+              department: req.user.department, 
+              role: 'employee', 
+              isActive: true 
+            }).select('_id')).map(e => e._id) },
+            workflowId: null                                    // Legacy single-level
+          }
+        ]
+      })
+      .sort({ slaDeadline: 1, createdAt: 1 })
+      .limit(15)
+      .populate('employee', 'fullName department jobTitle')
+      .populate('currentApprovalLayerId', 'layerName layerLevel');
 
       pendingReqs.forEach(r => {
-        const hrs    = Math.floor((now - new Date(r.createdAt)) / 3600000);
-        const urgent = hrs >= 40;
+        const hrs = Math.floor((now - new Date(r.createdAt)) / 3600000);
+        const isSlaBreached = r.slaDeadline && now > new Date(r.slaDeadline);
+        const urgent = isSlaBreached || hrs >= 48;
+
         notifications.push({
           id: String(r._id),
-          type: hrs >= 48 ? 'error' : hrs >= 40 ? 'warning' : 'info',
-          icon: hrs >= 48 ? 'alert-octagon' : hrs >= 40 ? 'alert-triangle' : 'clipboard',
-          title: hrs >= 48 ? 'Escalation Required' : urgent ? 'Urgent: Review Needed' : 'Pending Request',
+          type: urgent || isSlaBreached ? 'error' : hrs >= 24 ? 'warning' : 'info',
+          icon: isSlaBreached ? 'alert-octagon' : urgent ? 'alert-triangle' : 'clipboard',
+          title: r.currentApprovalLayerId 
+            ? `${r.currentApprovalLayerId.layerName} Review` 
+            : (urgent ? 'Escalation Required' : 'Pending Request'),
           msg: `${r.employee?.fullName} requested "${r.requestedRole}" — ${hrs}h ago`,
           time: r.createdAt,
           link: '/dashboard/review-requests',
-          urgent,
+          urgent: urgent || isSlaBreached,
         });
       });
 
       if (pendingReqs.length === 0) {
-        notifications.push({ id:'mgr-clear', type:'success', icon:'check-circle', title:'All Caught Up!', msg:'No pending requests from your team.', time:now, link:'/dashboard/review-requests', urgent:false });
+        notifications.push({ 
+          id:'mgr-clear', 
+          type:'success', 
+          icon:'check-circle', 
+          title:'All Caught Up!', 
+          msg:'No pending requests in your approval queue.', 
+          time: now, 
+          link:'/dashboard/review-requests', 
+          urgent: false 
+        });
       }
     }
+    // ==================== END FIXED SECTION ====================
 
     if (role === 'admin') {
-      const highRisk = await AccessRequest.find({ status:'Pending', riskLevel:'high' }).sort({ createdAt:1 }).limit(8).populate('employee','fullName department');
+      // Admin section remains mostly the same (you can improve later)
+      const highRisk = await AccessRequest.find({ status:'Pending', riskLevel:'high' })
+        .sort({ createdAt:1 }).limit(8).populate('employee','fullName department');
+
       highRisk.forEach(r => {
         const hrs = Math.floor((now - new Date(r.createdAt)) / 3600000);
-        notifications.push({ id:String(r._id), type:'error', icon:'alert-octagon', title:'High-Risk Request Pending', msg:`${r.employee?.fullName} (${r.employee?.department}) requested "${r.requestedRole}" — ${hrs}h ago`, time:r.createdAt, link:'/dashboard/analytics', urgent:true });
+        notifications.push({ 
+          id:String(r._id), 
+          type:'error', 
+          icon:'alert-octagon', 
+          title:'High-Risk Request Pending', 
+          msg:`${r.employee?.fullName} (${r.employee?.department}) requested "${r.requestedRole}" — ${hrs}h ago`, 
+          time:r.createdAt, 
+          link:'/dashboard/analytics', 
+          urgent:true 
+        });
       });
-
-      const allPending = await AccessRequest.find({ status:'Pending' }).select('createdAt');
-      const escalated  = allPending.filter(r => (now - new Date(r.createdAt)) > 48*3600000);
-      if (escalated.length > 0) {
-        notifications.push({ id:'admin-escalated', type:'warning', icon:'zap', title:`${escalated.length} Escalated Request${escalated.length>1?'s':''}`, msg:`${escalated.length} request${escalated.length>1?'s have':' has'} exceeded 48-hour limit.`, time:now, link:'/dashboard/analytics', urgent:true });
-      }
 
       const totalPending = await AccessRequest.countDocuments({ status:'Pending' });
       if (totalPending > 0) {
-        notifications.push({ id:'admin-pending', type:'info', icon:'clock', title:`${totalPending} Total Pending`, msg:`${totalPending} requests await approval system-wide.`, time:now, link:'/dashboard/analytics', urgent:false });
-      }
-
-      const inactiveCnt = await User.countDocuments({ isActive:false });
-      if (inactiveCnt > 0) {
-        notifications.push({ id:'admin-inactive', type:'info', icon:'user-x', title:`${inactiveCnt} Inactive Account${inactiveCnt>1?'s':''}`, msg:`${inactiveCnt} user account${inactiveCnt>1?'s are':' is'} deactivated.`, time:now, link:'/dashboard/manage-users', urgent:false });
+        notifications.push({ 
+          id:'admin-pending', 
+          type:'info', 
+          icon:'clock', 
+          title:`${totalPending} Total Pending`, 
+          msg:`${totalPending} requests await approval system-wide.`, 
+          time:now, 
+          link:'/dashboard/analytics', 
+          urgent:false 
+        });
       }
     }
 
+    // Sort: urgent first, then newest
     notifications.sort((a,b) => {
       if (a.urgent && !b.urgent) return -1;
       if (!a.urgent && b.urgent) return 1;
       return new Date(b.time) - new Date(a.time);
     });
 
-    const unreadCount = notifications.filter(n => n.urgent || n.type==='error' || n.type==='warning').length;
-    res.json({ notifications: notifications.slice(0,15), unreadCount });
+    // Count pending approvals for badge (all pending, not just urgent/warning)
+    let unreadCount = 0;
+    if (role === 'manager' || role === 'admin') {
+      unreadCount = await AccessRequest.countDocuments({ 
+        status: 'Pending', 
+        currentApproverIds: req.user._id 
+      });
+    } else if (role === 'employee') {
+      unreadCount = await AccessRequest.countDocuments({ 
+        employee: req.user.id, 
+        status: 'Pending' 
+      });
+    }
+
+    res.json({ 
+      notifications: notifications.slice(0, 15), 
+      unreadCount 
+    });
+
   } catch (err) {
+    console.error('Notification error:', err);
     res.status(500).json({ message: err.message });
   }
 });

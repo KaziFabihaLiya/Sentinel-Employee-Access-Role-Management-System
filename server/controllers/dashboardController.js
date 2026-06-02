@@ -30,14 +30,17 @@ const getManagerStats = async (req, res) => {
 
     const [totalTeam, pendingApprovals, recentlyApproved] = await Promise.all([
       AccessRequest.countDocuments({ employee: { $in: empIds } }),
-      AccessRequest.countDocuments({ employee: { $in: empIds }, status: 'Pending' }),
+      AccessRequest.countDocuments({ status: 'Pending', currentApproverIds: req.user._id }),
       AccessRequest.countDocuments({ employee: { $in: empIds }, status: 'Approved' }),
     ]);
 
     // Pending list sorted oldest-first (most urgent — approaching 48h escalation)
-    const pendingList = await AccessRequest.find({ employee: { $in: empIds }, status: 'Pending' })
-      .sort({ createdAt: 1 }).limit(10)
-      .populate('employee', 'fullName department jobTitle');
+    const pendingList = await AccessRequest.find({ status: 'Pending', currentApproverIds: req.user._id })
+      .sort({ slaDeadline: 1, createdAt: 1 }).limit(10)
+      .populate('employee', 'fullName department jobTitle')
+      .populate('workflowId', 'workflowName')
+      .populate('currentApprovalLayerId', 'layerName layerLevel')
+      .populate('currentApproverIds', 'fullName email jobTitle');
 
     // Flag requests older than 48h for escalation warning
     const now = new Date();
@@ -53,12 +56,13 @@ const getManagerStats = async (req, res) => {
 // GET /api/dashboard/admin-stats
 const getAdminStats = async (req, res) => {
   try {
+    const adminQueueFilter = { status: 'Pending', currentApproverIds: req.user._id };
     const [totalEmployees, totalRequests, pendingApprovals, approvedRoles, highRiskPending] = await Promise.all([
       User.countDocuments({ role: 'employee', isActive: true }),
       AccessRequest.countDocuments(),
-      AccessRequest.countDocuments({ status: 'Pending' }),
+      AccessRequest.countDocuments(adminQueueFilter),
       AccessRequest.countDocuments({ status: 'Approved' }),
-      AccessRequest.countDocuments({ status: 'Pending', riskLevel: 'high' }),
+      AccessRequest.countDocuments({ ...adminQueueFilter, riskLevel: 'high' }),
     ]);
 
     // Monthly trend for last 6 months

@@ -29,3 +29,5 @@ server/.env
 client/.env
 server/node_modules
 client/node_modules
+docs/postgresql-migration-and-rag-guide.md
+docs/test-plan.md

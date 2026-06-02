@@ -223,7 +223,20 @@ const ManagerHome = () => {
 
   const handleAction = async (id, action, comment) => {
     try {
-      await axiosInstance.patch(`/requests/${id}/review`, { status:action, managerComment:comment });
+      const isApproved = action === 'approved';
+      if (selectedReq?.workflowId) {
+        await axiosInstance.put(
+          `/approvals/${id}/${isApproved ? 'approve' : 'reject'}`,
+          isApproved
+            ? { comments: comment }
+            : { rejectionReason: comment || 'Rejected from manager dashboard', comments: comment }
+        );
+      } else {
+        await axiosInstance.patch(`/requests/${id}/review`, {
+          status: isApproved ? 'Approved' : 'Rejected',
+          managerComment: comment,
+        });
+      }
       showToast(action==='approved' ? '✅ Request approved successfully' : '✕ Request rejected');
       fetchStats();
     } catch(err) {

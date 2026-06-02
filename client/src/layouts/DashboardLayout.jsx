@@ -33,6 +33,7 @@ const SIDEBAR_LINKS = {
     {label:'Profile',         path:'/dashboard/profile',         icon:'◉'},
   ],
   admin:[
+    {label:'Approval Queue',path:'/dashboard/approval-queue',icon:'⏳'},
     {label:'Admin Home',   path:'/dashboard',               icon:'⊞',exact:true},
     {label:'Manage Roles', path:'/dashboard/manage-roles',  icon:'✦'},
     {label:'Manage Users', path:'/dashboard/manage-users',  icon:'◧'},
@@ -281,7 +282,7 @@ const DashboardLayout = () => {
                   <span style={{ fontSize:'1rem',opacity:.8,minWidth:'18px',textAlign:'center' }}>{link.icon}</span>
                   {link.label}
                   {/* Badge for pending count on review-requests link */}
-                  {link.label==='Review Requests' && unread>0 && (
+                  {['Review Requests', 'Approval Queue'].includes(link.label) && unread>0 && (
                     <span style={{ marginLeft:'auto',background:T.pending,color:T.navy,fontSize:'.65rem',fontWeight:'800',padding:'.1rem .45rem',borderRadius:'100px',minWidth:'18px',textAlign:'center' }}>{unread}</span>
                   )}
                 </NavLink>

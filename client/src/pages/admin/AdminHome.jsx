@@ -80,9 +80,9 @@ const AdminHome = () => {
   const kpis = [
     {label:'Active Employees',  value:stats?.totalEmployees??0,   icon:'👥',accent:T.gradient,                         sub:'Currently active',         to:'/dashboard/manage-users'},
     {label:'Total Requests',    value:stats?.totalRequests??0,    icon:'📋',accent:'linear-gradient(135deg,#A78BFA,#7C3AED)',sub:'All time',              to:'/dashboard/audit-logs'},
-    {label:'Pending Approvals', value:stats?.pendingApprovals??0, icon:'⏳',accent:'linear-gradient(135deg,#F59E0B,#D97706)',sub:'Awaiting action',       to:'/dashboard/analytics'},
+    {label:'Pending Approvals', value:stats?.pendingApprovals??0, icon:'⏳',accent:'linear-gradient(135deg,#F59E0B,#D97706)',sub:'Awaiting action',       to:'/dashboard/approval-queue'},
     {label:'Approved Roles',    value:stats?.approvedRoles??0,    icon:'✅',accent:'linear-gradient(135deg,#10D988,#059669)',sub:'Active grants',         to:'/dashboard/revoke-access'},
-    {label:'High-Risk Pending', value:stats?.highRiskPending??0,  icon:'🔴',accent:'linear-gradient(135deg,#EF4444,#DC2626)',sub:'Require attention',    to:'/dashboard/analytics'},
+    {label:'High-Risk Pending', value:stats?.highRiskPending??0,  icon:'🔴',accent:'linear-gradient(135deg,#EF4444,#DC2626)',sub:'Require attention',    to:'/dashboard/approval-queue'},
   ];
 
   const quickLinks = [
@@ -135,7 +135,7 @@ const AdminHome = () => {
               <p style={{ fontSize:'.78rem',color:T.muted,marginTop:'.1rem' }}>These require additional admin approval after manager review</p>
             </div>
           </div>
-          <Link to="/dashboard/analytics" style={{ textDecoration:'none' }}>
+          <Link to="/dashboard/approval-queue" style={{ textDecoration:'none' }}>
             <button style={{ background:'rgba(239,68,68,.15)',border:'1px solid rgba(239,68,68,.3)',color:'#F87171',padding:'.4rem .9rem',borderRadius:'8px',fontFamily:"'DM Sans',sans-serif",fontWeight:'700',fontSize:'.82rem',cursor:'pointer',whiteSpace:'nowrap' }}>Review →</button>
           </Link>
         </div>

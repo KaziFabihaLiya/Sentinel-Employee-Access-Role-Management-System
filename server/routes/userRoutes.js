@@ -25,6 +25,38 @@ const upload = multer({
   },
 });
 
+// POST /api/users - Create new user (Admin only)
+router.post('/', protect, authorize('admin'), async (req, res) => {
+  try {
+    const { fullName, email, department, jobTitle, password, role = 'employee', isActive = true } = req.body;
+
+    if (!fullName || !email || !department || !jobTitle || !password) {
+      return res.status(400).json({ message: 'All fields are required' });
+    }
+
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: 'User with this email already exists' });
+    }
+
+    const user = await User.create({
+      fullName,
+      email: email.toLowerCase(),
+      department,
+      jobTitle,
+      password,
+      role,
+      isActive,
+    });
+
+    const userResponse = await User.findById(user._id).select('-password');
+
+    res.status(201).json(userResponse);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 // PATCH /api/users/profile
 router.patch('/profile', protect, upload.single('avatar'), async (req, res) => {
   try {

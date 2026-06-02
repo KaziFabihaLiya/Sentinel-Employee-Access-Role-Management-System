@@ -1,5 +1,5 @@
 // server/seed.js  —  run once: node seed.js
-// Creates: 1 Admin, 4 Managers, 18 Employees, 50+ Requests, 8 Role Templates, 30+ Audit Logs
+// Creates: 1 Admin, 8 Managers, 34 Employees, 50+ Requests, 16 Role Templates, 30+ Audit Logs
 // Admin: admin@earms.com / Admin@@@
 const mongoose = require('mongoose');
 const dotenv   = require('dotenv');
@@ -27,11 +27,15 @@ const USERS = [
   // Admin
   { fullName:'System Admin',        email:'admin@earms.com',       department:'IT',          jobTitle:'System Administrator',  password:'Admin@@@',      role:'admin'    },
 
-  // Managers (4 departments)
+  // Managers (8 departments)
   { fullName:'Sarah Chen',          email:'sarah@earms.com',       department:'Finance',     jobTitle:'Finance Manager',       password:'Manager123!',   role:'manager'  },
   { fullName:'Marcus Oduya',        email:'marcus@earms.com',      department:'IT',          jobTitle:'IT Manager',            password:'Manager123!',   role:'manager'  },
   { fullName:'Priya Sharma',        email:'priya.m@earms.com',     department:'HR',          jobTitle:'HR Manager',            password:'Manager123!',   role:'manager'  },
   { fullName:'James Blackwood',     email:'james.m@earms.com',     department:'Operations',  jobTitle:'Operations Manager',    password:'Manager123!',   role:'manager'  },
+  { fullName:'Grace Mensah',        email:'grace.m@earms.com',     department:'Security',    jobTitle:'Security Manager',      password:'Manager123!',   role:'manager'  },
+  { fullName:'Hiro Tanaka',         email:'hiro.m@earms.com',      department:'Engineering', jobTitle:'Engineering Manager',   password:'Manager123!',   role:'manager'  },
+  { fullName:'Elena Petrova',       email:'elena.m@earms.com',     department:'Legal',       jobTitle:'Legal Operations Lead', password:'Manager123!',   role:'manager'  },
+  { fullName:'Maya Rahman',         email:'maya.m@earms.com',      department:'Sales',       jobTitle:'Sales Manager',         password:'Manager123!',   role:'manager'  },
 
   // Finance Employees (5)
   { fullName:'Alex Johnson',        email:'alex@earms.com',        department:'Finance',     jobTitle:'Financial Analyst',     password:'Employee123!',  role:'employee' },
@@ -58,9 +62,33 @@ const USERS = [
   { fullName:'Maria Gonzalez',      email:'maria@earms.com',       department:'Operations',  jobTitle:'Supply Chain Analyst',  password:'Employee123!',  role:'employee' },
   { fullName:'Chris Thompson',      email:'chris@earms.com',       department:'Operations',  jobTitle:'Process Engineer',      password:'Employee123!',  role:'employee' },
   { fullName:'Nadia Ivanova',       email:'nadia@earms.com',       department:'Operations',  jobTitle:'Logistics Coordinator', password:'Employee123!',  role:'employee' },
+
+  // Security Employees (4)
+  { fullName:'Leah Morgan',         email:'leah@earms.com',        department:'Security',    jobTitle:'IAM Analyst',           password:'Employee123!',  role:'employee' },
+  { fullName:'Ahmed Khan',          email:'ahmed@earms.com',       department:'Security',    jobTitle:'SOC Analyst',           password:'Employee123!',  role:'employee' },
+  { fullName:'Mei Lin',             email:'mei@earms.com',         department:'Security',    jobTitle:'GRC Specialist',        password:'Employee123!',  role:'employee' },
+  { fullName:'Victor Santos',       email:'victor@earms.com',      department:'Security',    jobTitle:'Security Engineer',     password:'Employee123!',  role:'employee' },
+
+  // Engineering Employees (4)
+  { fullName:'Anika Das',           email:'anika@earms.com',       department:'Engineering', jobTitle:'Frontend Engineer',      password:'Employee123!',  role:'employee' },
+  { fullName:'Ben Carter',          email:'ben@earms.com',         department:'Engineering', jobTitle:'Platform Engineer',      password:'Employee123!',  role:'employee' },
+  { fullName:'Nora Ahmed',          email:'nora@earms.com',        department:'Engineering', jobTitle:'Data Engineer',          password:'Employee123!',  role:'employee' },
+  { fullName:'Samuel Reed',         email:'samuel@earms.com',      department:'Engineering', jobTitle:'SRE',                    password:'Employee123!',  role:'employee' },
+
+  // Legal Employees (4)
+  { fullName:'Iris Campbell',       email:'iris@earms.com',        department:'Legal',       jobTitle:'Contract Analyst',      password:'Employee123!',  role:'employee' },
+  { fullName:'Rafael Costa',        email:'rafael@earms.com',      department:'Legal',       jobTitle:'Compliance Associate',  password:'Employee123!',  role:'employee' },
+  { fullName:'Mariam Uddin',        email:'mariam@earms.com',      department:'Legal',       jobTitle:'Privacy Analyst',       password:'Employee123!',  role:'employee' },
+  { fullName:'Oliver Grant',        email:'oliver@earms.com',      department:'Legal',       jobTitle:'Legal Coordinator',     password:'Employee123!',  role:'employee' },
+
+  // Sales Employees (4)
+  { fullName:'Talia Evans',         email:'talia@earms.com',       department:'Sales',       jobTitle:'Account Executive',     password:'Employee123!',  role:'employee' },
+  { fullName:'Yusuf Rahman',        email:'yusuf@earms.com',       department:'Sales',       jobTitle:'Sales Operations Analyst',password:'Employee123!', role:'employee' },
+  { fullName:'Clara Nguyen',        email:'clara@earms.com',       department:'Sales',       jobTitle:'Customer Success Lead', password:'Employee123!',  role:'employee' },
+  { fullName:'Mateo Silva',         email:'mateo@earms.com',       department:'Sales',       jobTitle:'Partner Manager',       password:'Employee123!',  role:'employee' },
 ];
 
-// ── Role Templates (8) ─────────────────────────────────────────────────────────
+// ── Role Templates (16) ────────────────────────────────────────────────────────
 const ROLES = [
   { roleName:'Finance Viewer',      description:'Read-only access to financial reports and dashboards',          accessLevel:'Low',    permissions:['read:finance','read:reports','read:dashboard','view:invoices'] },
   { roleName:'Finance Analyst',     description:'Full finance data access including write and reporting',         accessLevel:'Medium', permissions:['read:finance','write:finance','read:reports','write:reports','view:invoices','export:data'] },
@@ -72,6 +100,14 @@ const ROLES = [
   { roleName:'Operations Analyst',  description:'Access to operations data, supply chain and logistics',         accessLevel:'Medium', permissions:['read:operations','write:operations','view:logistics','manage:inventory','read:suppliers','create:orders'] },
   { roleName:'IT Support Access',   description:'Access to IT systems for helpdesk and support operations',      accessLevel:'Medium', permissions:['read:systems','restart:services','view:logs','manage:tickets','access:vpn','remote:support'] },
   { roleName:'Data Analyst',        description:'Cross-functional read access for business intelligence',         accessLevel:'Medium', permissions:['read:finance','read:hr','read:operations','read:reports','export:data','view:analytics','create:reports'] },
+  { roleName:'IAM Auditor',         description:'Read access to identity governance evidence and access reviews', accessLevel:'Medium', permissions:['read:iam','read:audit','view:access-reviews','export:evidence'] },
+  { roleName:'Security Responder',  description:'Security operations access for incident investigation',          accessLevel:'High',   permissions:['read:systems','read:logs','isolate:endpoint','manage:incidents','export:security'] },
+  { roleName:'Source Code Writer',  description:'Repository write access for engineering delivery teams',         accessLevel:'Medium', permissions:['read:repos','write:repos','create:pull-request','run:ci','read:artifacts'] },
+  { roleName:'Production Deploy',   description:'Controlled production deployment and release access',            accessLevel:'High',   permissions:['deploy:production','rollback:release','read:logs','manage:feature-flags'] },
+  { roleName:'Legal Records Viewer',description:'Read-only access to contracts, legal cases, and policy records', accessLevel:'Low',    permissions:['read:contracts','read:policies','view:legal-cases'] },
+  { roleName:'Compliance Manager',  description:'Compliance workflow access for controls and evidence tracking',  accessLevel:'Medium', permissions:['read:compliance','write:controls','approve:evidence','export:audit'] },
+  { roleName:'CRM Sales User',      description:'Sales CRM access for account and opportunity management',        accessLevel:'Medium', permissions:['read:crm','write:accounts','write:opportunities','view:forecast'] },
+  { roleName:'Customer Data Admin', description:'Privileged customer data access for support and success leads',   accessLevel:'High',   permissions:['read:customers','write:customers','export:customers','manage:consents'] },
 ];
 
 // ── Build requests from a template array ──────────────────────────────────────
@@ -209,6 +245,10 @@ async function seed() {
     console.log('   MANAGER    marcus@earms.com        Manager123!  (IT)');
     console.log('   MANAGER    priya.m@earms.com       Manager123!  (HR)');
     console.log('   MANAGER    james.m@earms.com       Manager123!  (Operations)');
+    console.log('   MANAGER    grace.m@earms.com       Manager123!  (Security)');
+    console.log('   MANAGER    hiro.m@earms.com        Manager123!  (Engineering)');
+    console.log('   MANAGER    elena.m@earms.com       Manager123!  (Legal)');
+    console.log('   MANAGER    maya.m@earms.com        Manager123!  (Sales)');
     console.log('   EMPLOYEE   alex@earms.com          Employee123! (Finance)');
     console.log('   EMPLOYEE   james@earms.com         Employee123! (IT)');
     console.log('   EMPLOYEE   omar@earms.com          Employee123! (HR)');

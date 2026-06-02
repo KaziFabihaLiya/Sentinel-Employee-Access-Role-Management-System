@@ -5,6 +5,7 @@ import axiosInstance from '../../api/axiosInstance';
 import { T, Sk, StatusBadge, RiskBadge, Toast, PageHeader, TABLE_TH, GLOBAL_CSS } from '../../styles/darkTokens';
 import ApprovalTimeline from '../../components/ApprovalTimeline';
 import { approveRequest, rejectRequest, delegateApproval, getApprovalDetails } from '../../services/approvalService';
+import { useAuth } from '../../contexts/AuthContext';
 
 const TABS = ['Pending','Approved','Rejected','all'];
 
@@ -195,6 +196,7 @@ const RequestDetailModal = ({ request, approvalPath, history, onClose, onApprove
 // ─────────────────────────────────────────────────────────────────────────────
 
 const ReviewRequestsPage = () => {
+  const { user } = useAuth();
   const [data,    setData]    = useState({ requests:[], total:0 });
   const [loading, setLoading] = useState(true);
   const [tab,     setTab]     = useState('Pending');
@@ -271,7 +273,11 @@ const ReviewRequestsPage = () => {
   return (
     <div style={{ animation:'fadeUp .5s ease' }}>
       {toast && <Toast {...toast}/>}
-      <PageHeader badge="Manager" title="Review Requests" sub="Approve, reject, or delegate access requests in your queue" />
+      <PageHeader
+        badge={user?.role === 'admin' ? 'Admin' : 'Manager'}
+        title={user?.role === 'admin' ? 'Approval Queue' : 'Review Requests'}
+        sub="Approve, reject, or delegate access requests in your queue"
+      />
 
       {/* Stats banner */}
       {!loading && (

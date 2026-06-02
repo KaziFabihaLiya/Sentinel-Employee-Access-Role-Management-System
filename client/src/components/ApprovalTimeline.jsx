@@ -40,7 +40,7 @@ const ApprovalTimeline = ({ approvalPath = [], history = [], compact = false }) 
   return (
     <div style={{ position: 'relative', paddingLeft: compact ? '1.5rem' : '2rem' }}>
       {approvalPath.map((layer, idx) => {
-        const isCurrent = layer.isCurrent || layer.status === 'PENDING';
+        const isCurrent = !!layer.isCurrent;
         const style = getLayerStyle(layer.status, isCurrent);
         const assignedUsers = approversMap[String(layer.layerId)] || [];
         const isLast = idx === approvalPath.length - 1;
