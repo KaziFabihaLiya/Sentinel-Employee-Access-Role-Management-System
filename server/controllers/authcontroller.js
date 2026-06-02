@@ -95,7 +95,6 @@ const googleLogin = async (req, res) => {
           fullName: displayName || email.split('@')[0],
           avatarUrl: photoUrl || '',
           authProvider: 'google',
-          password: null, // No password for OAuth users
           department: '',
           jobTitle: '',
         });
