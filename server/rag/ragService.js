@@ -4,6 +4,7 @@ const User = require('../models/User');
 const AccessRequest = require('../models/AccessRequest');
 const RoleTemplate = require('../models/RoleTemplate');
 const AuditLog = require('../models/AuditLog');
+const { getAIResponse } = require('../services/ollamaService');
 
 const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
 const GENERATION_MODEL = process.env.OLLAMA_GENERATION_MODEL || 'llama3.2:1b';
@@ -202,7 +203,7 @@ function buildPrompt(question, context, user) {
 
   return `You are the Sentinel EARMS assistant for the Sentinel Employee Access Role Management System.
 
-Use only the retrieved context below to answer.
+Use ONLY the retrieved context below to answer. Do not invent any facts.
 Stay grounded in Sentinel EARMS topics: employee access requests, roles, approval workflow, audit logs, risk levels, users, managers, admins, departments, profiles, password management, notifications, JWT authentication, authorization, and security.
 If the question is unrelated to Sentinel EARMS, politely redirect the user to Sentinel EARMS topics.
 If the context does not contain enough information, say what is known from Sentinel EARMS and avoid inventing details.
@@ -222,19 +223,9 @@ Answer:`;
 }
 
 async function generateAnswer(prompt) {
-  const response = await ollama.post('/api/generate', {
-    model: GENERATION_MODEL,
-    prompt,
-    stream: false,
-    options: {
-      temperature: 0.2,
-      top_p: 0.9,
-    },
-  });
-
-  const answer = response.data?.response?.trim();
+  const answer = await getAIResponse(prompt, GENERATION_MODEL);
   if (!answer) {
-    throw new Error('Ollama did not return a generated answer.');
+    throw new Error('AI did not return a generated answer.');
   }
 
   return answer;

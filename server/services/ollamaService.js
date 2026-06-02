@@ -1,6 +1,7 @@
 const axios = require('axios');
 
 const OLLAMA_API_URL = process.env.OLLAMA_API_URL || 'https://kazifabihagolamliya-sentinel-ollama.hf.space/api/generate';
+const DEFAULT_MODEL = process.env.OLLAMA_GENERATION_MODEL || 'tinyllama';
 
 const normalizeOllamaResponse = (data) => {
   if (!data) return null;
@@ -22,16 +23,31 @@ const normalizeOllamaResponse = (data) => {
   return null;
 };
 
-const getAIResponse = async (prompt) => {
+const getAIResponse = async (prompt, model = DEFAULT_MODEL) => {
   if (!prompt || typeof prompt !== 'string') {
     throw new Error('Prompt is required');
   }
 
-  const payload = {
-    model: 'tinyllama',
-    prompt,
-    stream: false,
-  };
+  const isHuggingFaceApi = /hf\.space|huggingface\.co/i.test(OLLAMA_API_URL);
+
+  const payload = isHuggingFaceApi
+    ? {
+        inputs: prompt,
+        parameters: {
+          temperature: 0.2,
+          top_p: 0.9,
+          max_new_tokens: 256,
+        },
+      }
+    : {
+        model,
+        prompt,
+        stream: false,
+        options: {
+          temperature: 0.2,
+          top_p: 0.9,
+        },
+      };
 
   const response = await axios.post(OLLAMA_API_URL, payload, {
     headers: {
