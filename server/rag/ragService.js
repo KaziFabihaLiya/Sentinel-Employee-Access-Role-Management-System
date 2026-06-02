@@ -72,21 +72,41 @@ async function getKnowledgeEmbeddings() {
 }
 
 async function retrieveRelevantDocs(question) {
-  const [questionEmbedding, docsWithEmbeddings] = await Promise.all([
-    createEmbedding(question),
-    getKnowledgeEmbeddings(),
-  ]);
+  try {
+    const [questionEmbedding, docsWithEmbeddings] = await Promise.all([
+      createEmbedding(question),
+      getKnowledgeEmbeddings(),
+    ]);
 
-  return docsWithEmbeddings
-    .map((doc) => ({
-      id: doc.id,
-      title: doc.title,
-      topic: doc.topic,
-      content: doc.content,
-      score: cosineSimilarity(questionEmbedding, doc.embedding),
-    }))
-    .sort((a, b) => b.score - a.score)
-    .slice(0, TOP_K);
+    return docsWithEmbeddings
+      .map((doc) => ({
+        id: doc.id,
+        title: doc.title,
+        topic: doc.topic,
+        content: doc.content,
+        score: cosineSimilarity(questionEmbedding, doc.embedding),
+      }))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, TOP_K);
+  } catch (error) {
+    // Fallback: if embeddings fail (e.g., Ollama not available), use keyword-based retrieval
+    console.warn('[RAG] Embeddings unavailable, using keyword fallback:', error.message);
+    const questionTokens = new Set(question.toLowerCase().split(/\s+/));
+    return knowledgeBase
+      .map((doc) => ({
+        id: doc.id,
+        title: doc.title,
+        topic: doc.topic,
+        content: doc.content,
+        score: (doc.title + ' ' + doc.topic + ' ' + doc.content)
+          .toLowerCase()
+          .split(/\s+/)
+          .filter((token) => questionTokens.has(token)).length,
+      }))
+      .filter((doc) => doc.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, TOP_K);
+  }
 }
 
 async function getLiveSystemDocs(user) {
