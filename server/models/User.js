@@ -5,12 +5,17 @@ const bcrypt = require('bcryptjs');
 const userSchema = new mongoose.Schema({
   fullName:   { type: String, required: [true, 'Full name required'], trim: true },
   email:      { type: String, required: [true, 'Email required'], unique: true, lowercase: true, trim: true },
-  department: { type: String, required: [true, 'Department required'] },
-  jobTitle:   { type: String, required: [true, 'Job title required'] },
-  password:   { type: String, required: [true, 'Password required'], minlength: [6, 'Min 6 characters'] },
+  department: { type: String, default: '' },
+  jobTitle:   { type: String, default: '' },
+  password:   { type: String }, // Optional for OAuth users
   role:       { type: String, enum: ['employee', 'manager', 'admin'], default: 'employee' },
   isActive:   { type: Boolean, default: true },
   avatarUrl:  { type: String, default: '' },
+  
+  // OAuth Integration
+  googleId:       { type: String, sparse: true, unique: true }, // Unique but nullable
+  authProvider:   { type: String, enum: ['email', 'google'], default: 'email' },
+  
 }, { timestamps: true });
 
 // ✅ Fixed for Mongoose 9+

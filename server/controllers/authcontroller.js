@@ -65,6 +65,64 @@ const login = async (req, res) => {
   }
 };
 
+// POST /api/auth/google — Handle Google OAuth callback
+const googleLogin = async (req, res) => {
+  try {
+    const { googleId, email, displayName, photoUrl } = req.body;
+
+    if (!googleId || !email) {
+      return res.status(400).json({ message: 'Missing Google ID or email' });
+    }
+
+    // Find user by googleId first
+    let user = await User.findOne({ googleId });
+
+    if (!user) {
+      // Try to find by email (existing user linking Google)
+      user = await User.findOne({ email });
+
+      if (user) {
+        // Link Google account to existing user
+        user.googleId = googleId;
+        user.authProvider = 'google';
+        if (photoUrl) user.avatarUrl = photoUrl;
+        await user.save();
+      } else {
+        // Create new user from Google data
+        user = await User.create({
+          googleId,
+          email,
+          fullName: displayName || email.split('@')[0],
+          avatarUrl: photoUrl || '',
+          authProvider: 'google',
+          password: null, // No password for OAuth users
+          department: '',
+          jobTitle: '',
+        });
+
+        req.user = user;
+        await createAuditLog(req, 'USER_REGISTERED', `New user registered via Google: ${user.fullName}`, `User:${user._id}`);
+      }
+    }
+
+    if (!user.isActive) {
+      return res.status(403).json({ message: 'Account is deactivated. Contact your administrator.' });
+    }
+
+    const token = generateToken(user);
+    req.user = user;
+    await createAuditLog(req, 'USER_LOGIN', `${user.fullName} logged in via Google`, `User:${user._id}`);
+
+    res.status(200).json({
+      message: 'Google login successful',
+      token,
+      user: sanitizeUser(user),
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // GET /api/auth/me
 const getMe = async (req, res) => {
   try {
@@ -75,4 +133,4 @@ const getMe = async (req, res) => {
   }
 };
 
-module.exports = { register, login, getMe };
+module.exports = { register, login, googleLogin, getMe };

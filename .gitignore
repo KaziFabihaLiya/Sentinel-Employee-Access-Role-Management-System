@@ -31,3 +31,9 @@ server/node_modules
 client/node_modules
 docs/postgresql-migration-and-rag-guide.md
 docs/test-plan.md
+DONE.md
+GOOGLE_OAUTH_SETUP.md
+IMPLEMENTATION_SUMMARY.md
+OLLAMA_HOSTING_GUIDE.md
+PRE_LAUNCH_CHECKLIST.md
+server/.env.example

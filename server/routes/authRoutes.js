@@ -1,12 +1,13 @@
 const express = require('express');
 const router = express.Router();
-const { register, login, getMe } = require('../controllers/authcontroller');
+const { register, login, googleLogin, getMe } = require('../controllers/authcontroller');
 const { protect } = require('../middleware/authMiddleware');
 const User = require('../models/User');
 
 
 router.post('/register', register);
 router.post('/login', login);
+router.post('/google', googleLogin);  // 🆕 Google OAuth endpoint
 router.get('/me', protect, getMe); // Protected — needs valid token
 
 // PUT /api/auth/change-password

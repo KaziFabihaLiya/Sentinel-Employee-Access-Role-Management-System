@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { useAuth } from '../../contexts/AuthContext';
+import { GoogleLoginButton } from '../../components/GoogleLoginButton';
 import axiosInstance from '../../api/axiosInstance';
 
 const T = {
@@ -222,6 +223,9 @@ const LoginPage = () => {
               Create one here
             </Link>
           </p>
+
+          {/* 🆕 Google Login Option */}
+          <GoogleLoginButton />
         </div>
       </div>
 

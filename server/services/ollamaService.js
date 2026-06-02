@@ -1,0 +1,51 @@
+const axios = require('axios');
+
+const OLLAMA_API_URL = process.env.OLLAMA_API_URL || 'https://kazifabihagolamliya-sentinel-ollama.hf.space/api/generate';
+
+const normalizeOllamaResponse = (data) => {
+  if (!data) return null;
+  if (typeof data === 'string') return data;
+  if (typeof data.response === 'string') return data.response;
+  if (typeof data.generated_text === 'string') return data.generated_text;
+  if (Array.isArray(data.output)) {
+    if (typeof data.output[0]?.generated_text === 'string') return data.output[0].generated_text;
+    if (typeof data.output[0]?.text === 'string') return data.output[0].text;
+  }
+  if (Array.isArray(data.results) && typeof data.results[0]?.output === 'string') {
+    return data.results[0].output;
+  }
+  if (Array.isArray(data.data)) {
+    if (typeof data.data[0] === 'string') return data.data[0];
+    if (typeof data.data[0]?.generated_text === 'string') return data.data[0].generated_text;
+    if (typeof data.data[0]?.text === 'string') return data.data[0].text;
+  }
+  return null;
+};
+
+const getAIResponse = async (prompt) => {
+  if (!prompt || typeof prompt !== 'string') {
+    throw new Error('Prompt is required');
+  }
+
+  const payload = {
+    model: 'tinyllama',
+    prompt,
+    stream: false,
+  };
+
+  const response = await axios.post(OLLAMA_API_URL, payload, {
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    timeout: 120000,
+  });
+
+  const answer = normalizeOllamaResponse(response.data);
+  if (!answer) {
+    throw new Error('Unexpected response from Ollama endpoint');
+  }
+
+  return answer;
+};
+
+module.exports = { getAIResponse };
