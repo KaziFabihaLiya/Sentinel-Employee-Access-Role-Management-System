@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { protect } = require('../middleware/authMiddleware');
-const { getAIResponse } = require('../services/ollamaService');
+const { getAIResponse } = require('../services/groqService');
 
 router.post('/message', protect, async (req, res) => {
   try {
