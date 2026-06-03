@@ -227,6 +227,12 @@ const answerFromContext = (question, context, user) => {
   const roleDocs = context.filter((doc) => doc.type === 'role');
   const workflowDocs = context.filter((doc) => doc.type === 'workflow');
 
+  // If every matched doc is a static policy doc (no live DB data matched),
+  // return null so the caller can escalate to Groq with enriched context
+  // rather than serving a generic policy dump.
+  const hasLiveData = requestDocs.length > 0 || roleDocs.length > 0 || workflowDocs.length > 0;
+  if (!hasLiveData) return null;
+
   if (lower.includes('status') || lower.includes('pending') || lower.includes('approved') || lower.includes('rejected')) {
     if (requestDocs.length) {
       const lines = requestDocs.slice(0, 3).map((doc) => {
@@ -300,4 +306,4 @@ async function answerQuestion(question, user) {
   };
 }
 
-module.exports = { answerQuestion };
+module.exports = { answerQuestion, retrieveContext };

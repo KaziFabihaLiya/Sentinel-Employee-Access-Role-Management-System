@@ -2,11 +2,32 @@ const express = require('express');
 const router = express.Router();
 const { protect } = require('../middleware/authMiddleware');
 const { getAIResponse } = require('../services/groqService');
-const { answerQuestion } = require('../services/chatbotService');
+const { answerQuestion, retrieveContext } = require('../services/chatbotService');
 
-// Determine whether the RAG result has any meaningful context.
-// "Low-confidence" means every retrieved doc scored 0 (fallback slice).
+// Returns true only when at least one retrieved doc carries a real score
+// AND at least one is a live DB doc (request/role/workflow).
+// Pure-policy hits with score > 0 are intentionally excluded here because
+// answerFromContext now returns null for those — Groq handles them better.
 const hasContext = (sources = []) => sources.some((source) => source.score > 0);
+
+// Build a context-enriched prompt for Groq so it answers with awareness of
+// EARMS policies and whatever live snippets were retrieved, even when the
+// local RAG couldn't produce a confident answer on its own.
+const buildGroqPrompt = (message, context = []) => {
+  const snippets = context
+    .slice(0, 5)
+    .map((doc) => `[${doc.type.toUpperCase()}] ${doc.title}: ${doc.text}`)
+    .join('\n\n');
+
+  return [
+    'You are an assistant for Sentinel EARMS, an Employee Access and Role Management System.',
+    snippets
+      ? `Use the following retrieved context to inform your answer:\n\n${snippets}`
+      : 'No specific context was retrieved; answer from your general EARMS knowledge.',
+    `User question: ${message}`,
+    'Answer concisely and specifically. If the context does not cover the question, say so clearly.',
+  ].join('\n\n');
+};
 
 router.post('/message', protect, async (req, res) => {
   try {
@@ -23,11 +44,17 @@ router.post('/message', protect, async (req, res) => {
       });
     }
 
-    // --- Step 1: Try the local RAG service first ---
+    // --- Step 1: Run local RAG ---
+    // answerQuestion internally calls retrieveContext, so we reuse its
+    // context via a parallel retrieveContext call only when we need it for
+    // Groq. To avoid double DB hits, we always call answerQuestion first and
+    // only call retrieveContext when we know we're falling back.
     const ragResult = await answerQuestion(message, req.user);
 
-    // --- Step 2: If context was found, return the RAG answer directly ---
-    if (hasContext(ragResult.sources)) {
+    // --- Step 2: Local RAG answered confidently — return it directly ---
+    // hasContext checks score > 0; answerFromContext returns null for
+    // policy-only hits, so ragResult.answer will be null in that case too.
+    if (hasContext(ragResult.sources) && ragResult.answer !== null) {
       return res.json({
         reply: ragResult.answer,
         answer: ragResult.answer,
@@ -38,14 +65,26 @@ router.post('/message', protect, async (req, res) => {
       });
     }
 
-    // --- Step 3: No meaningful context — fall back to Groq ---
-    const groqAnswer = await getAIResponse(message);
+    // --- Step 3: Fallback — retrieve context fresh, enrich Groq prompt ---
+    // We call retrieveContext again here so the Groq prompt gets the same
+    // retrieved snippets the RAG pipeline saw, including policy docs that
+    // give Groq useful background even when no live DB data was found.
+    const context = await retrieveContext(message, req.user);
+    const groqPrompt = buildGroqPrompt(message, context);
+    const groqAnswer = await getAIResponse(groqPrompt);
 
     return res.json({
       reply: groqAnswer,
       answer: groqAnswer,
       message: groqAnswer,
-      sources: [],
+      // Surface whichever sources were retrieved so the client can still
+      // show attribution even for Groq-answered responses.
+      sources: context.slice(0, 4).map((doc) => ({
+        id: doc.id,
+        title: doc.title,
+        type: doc.type,
+        score: doc.score,
+      })),
       suggestions: ragResult.suggestions || [],
       mode: 'groq-fallback',
     });
@@ -75,11 +114,11 @@ router.post('/ask', protect, async (req, res) => {
       return res.status(400).json({ error: 'Prompt is required' });
     }
 
-    // --- Step 1: Try the local RAG service first ---
+    // --- Step 1: Run local RAG ---
     const ragResult = await answerQuestion(prompt, req.user);
 
-    // --- Step 2: Return RAG answer if context was found ---
-    if (hasContext(ragResult.sources)) {
+    // --- Step 2: Return RAG answer when confident ---
+    if (hasContext(ragResult.sources) && ragResult.answer !== null) {
       return res.json({
         answer: ragResult.answer,
         sources: ragResult.sources,
@@ -88,12 +127,19 @@ router.post('/ask', protect, async (req, res) => {
       });
     }
 
-    // --- Step 3: Fall back to Groq ---
-    const groqAnswer = await getAIResponse(prompt);
+    // --- Step 3: Context-enriched Groq fallback ---
+    const context = await retrieveContext(prompt, req.user);
+    const groqPrompt = buildGroqPrompt(prompt, context);
+    const groqAnswer = await getAIResponse(groqPrompt);
 
     return res.json({
       answer: groqAnswer,
-      sources: [],
+      sources: context.slice(0, 4).map((doc) => ({
+        id: doc.id,
+        title: doc.title,
+        type: doc.type,
+        score: doc.score,
+      })),
       suggestions: ragResult.suggestions || [],
       mode: 'groq-fallback',
     });
