@@ -1,6 +1,6 @@
 const axios = require('axios');
 
-const GROQ_API_URL = process.env.GROQ_API_URL || 'https://api.groq.ai/v1/completions';
+const GROQ_API_URL = process.env.GROQ_API_URL || 'https://api.groq.com/openai/v1/chat/completions';
 const DEFAULT_MODEL = process.env.GROQ_MODEL || 'llama3-8b-8192';
 const TIMEOUT_MS = 300000;
 
@@ -21,12 +21,20 @@ const getAIResponse = async (prompt, model = DEFAULT_MODEL) => {
 
   const payload = {
     model,
-    prompt,
+    messages: [
+      {
+        role: 'system',
+        content: 'You are a concise assistant for Sentinel EARMS, an Employee Access and Role Management System.',
+      },
+      {
+        role: 'user',
+        content: prompt,
+      },
+    ],
     max_tokens: 256,
     temperature: 0.2,
     top_p: 0.95,
     stream: false,
-    stop: null,
   };
 
   const headers = {
