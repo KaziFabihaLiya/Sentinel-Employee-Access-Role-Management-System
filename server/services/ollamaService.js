@@ -1,7 +1,7 @@
 const axios = require('axios');
 
 const OLLAMA_API_URL = process.env.OLLAMA_API_URL || 'https://kazifabihagolamliya-sentinel-ollama.hf.space/api/generate';
-const DEFAULT_MODEL = process.env.OLLAMA_GENERATION_MODEL || 'tinyllama';
+const DEFAULT_MODEL = process.env.OLLAMA_GENERATION_MODEL || 'llama3.2:1b';
 
 const normalizeOllamaResponse = (data) => {
   if (!data) return null;
@@ -32,13 +32,16 @@ const getAIResponse = async (prompt, model = DEFAULT_MODEL) => {
     model,
     prompt,
     stream: false,
+    options: {
+      num_predict: 100,
+    },
   };
 
   const response = await axios.post(OLLAMA_API_URL, payload, {
     headers: {
       'Content-Type': 'application/json',
     },
-    timeout: 120000,
+    timeout: 300000,
   });
 
   const answer = normalizeOllamaResponse(response.data);
