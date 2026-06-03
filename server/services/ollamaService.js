@@ -28,26 +28,11 @@ const getAIResponse = async (prompt, model = DEFAULT_MODEL) => {
     throw new Error('Prompt is required');
   }
 
-  const isHuggingFaceApi = /hf\.space|huggingface\.co/i.test(OLLAMA_API_URL);
-
-  const payload = isHuggingFaceApi
-    ? {
-        inputs: prompt,
-        parameters: {
-          temperature: 0.2,
-          top_p: 0.9,
-          max_new_tokens: 256,
-        },
-      }
-    : {
-        model,
-        prompt,
-        stream: false,
-        options: {
-          temperature: 0.2,
-          top_p: 0.9,
-        },
-      };
+  const payload = {
+    model,
+    prompt,
+    stream: false,
+  };
 
   const response = await axios.post(OLLAMA_API_URL, payload, {
     headers: {

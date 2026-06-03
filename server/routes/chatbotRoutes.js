@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const { protect } = require('../middleware/authMiddleware');
-const { answerQuestion, isOllamaConnectionError, isOllamaModelError } = require('../rag/ragService');
 const { getAIResponse } = require('../services/ollamaService');
 
 router.post('/message', protect, async (req, res) => {
@@ -18,14 +17,12 @@ router.post('/message', protect, async (req, res) => {
       });
     }
 
-    const result = await answerQuestion(message, req.user);
+    const answer = await getAIResponse(message);
 
     return res.json({
-      reply: result.answer,
-      answer: result.answer,
-      message: result.answer,
-      sources: result.sources,
-      contextUsed: result.contextUsed,
+      reply: answer,
+      answer,
+      message: answer,
     });
   } catch (error) {
     console.error('[chatbot] Failed to process chatbot message:', {
@@ -35,23 +32,11 @@ router.post('/message', protect, async (req, res) => {
       data: error.response?.data,
     });
 
-    let statusCode = 500;
-    let finalAnswer = 'I could not process that Sentinel EARMS question right now. Please try again in a moment.';
-
-    if (isOllamaConnectionError(error)) {
-      statusCode = 503;
-      finalAnswer = 'I could not reach Ollama. Please make sure Ollama is running locally, then run `ollama pull llama3.2:1b` and `ollama pull nomic-embed-text` if the models are not installed.';
-    } else if (isOllamaModelError(error)) {
-      statusCode = 503;
-      finalAnswer = 'Ollama is running, but a required local model is missing. Please run `ollama pull llama3.2:1b` and `ollama pull nomic-embed-text`, then try again.';
-    }
-
-    return res.status(statusCode).json({
+    const finalAnswer = 'I could not process that Sentinel EARMS question right now. Please try again in a moment.';
+    return res.status(500).json({
       reply: finalAnswer,
       answer: finalAnswer,
       message: finalAnswer,
-      sources: [],
-      contextUsed: '',
     });
   }
 });
