@@ -5,6 +5,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import axiosInstance from '../api/axiosInstance';
 import ChatbotWidget from '../components/ChatbotWidget';
+import { getAssetUrl } from '../utils/assetUrl';
 
 const T = {
   navy:'#050D1F',navyMid:'#0B1730',surface:'#0F1E38',
@@ -80,18 +81,43 @@ const Breadcrumb = ({ links }) => {
 const DashboardLayout = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [notifOpen,   setNotifOpen]   = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [searchOpen,  setSearchOpen]  = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const [notifs,      setNotifs]      = useState([]);
   const [unread,      setUnread]      = useState(0);
   const [notifLoad,   setNotifLoad]   = useState(false);
   const notifRef   = useRef(null);
   const profileRef = useRef(null);
+  const searchRef  = useRef(null);
 
   const links    = SIDEBAR_LINKS[user?.role] || [];
   const roleMeta = ROLE_META[user?.role] || ROLE_META.employee;
   const initials = user?.fullName?.split(' ').map(n=>n[0]).slice(0,2).join('').toUpperCase()||'U';
+  const avatarSrc = getAssetUrl(user?.avatarUrl);
+  const searchableLinks = links.map(link => ({
+    ...link,
+    keywords: `${link.label} ${link.path} ${roleMeta.label} ${user?.role || ''}`.toLowerCase(),
+  }));
+  const searchResults = searchableLinks.filter(item => {
+    const q = searchQuery.trim().toLowerCase();
+    return !q || item.keywords.includes(q);
+  }).slice(0, 6);
+
+  const openSearch = () => {
+    setSearchOpen(true);
+    setNotifOpen(false);
+    setProfileOpen(false);
+  };
+
+  const goToSearchResult = (path) => {
+    navigate(path);
+    setSearchOpen(false);
+    setSearchQuery('');
+  };
 
   const fetchNotifications = useCallback(() => {
     setNotifLoad(true);
@@ -111,14 +137,28 @@ const DashboardLayout = () => {
     const h = e => {
       if (notifRef.current && !notifRef.current.contains(e.target))   setNotifOpen(false);
       if (profileRef.current && !profileRef.current.contains(e.target)) setProfileOpen(false);
+      if (searchRef.current && !searchRef.current.contains(e.target)) setSearchOpen(false);
     };
     document.addEventListener('mousedown', h);
     return () => document.removeEventListener('mousedown', h);
   }, []);
 
+  useEffect(() => {
+    const h = e => {
+      const isSearchShortcut = (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k';
+      if (isSearchShortcut) {
+        e.preventDefault();
+        openSearch();
+      }
+      if (e.key === 'Escape') setSearchOpen(false);
+    };
+    document.addEventListener('keydown', h);
+    return () => document.removeEventListener('keydown', h);
+  }, []);
+
   const Avatar = ({ size=28, style={} }) => (
     <div style={{ width:size,height:size,borderRadius:'50%',background:T.gradient,display:'flex',alignItems:'center',justifyContent:'center',fontFamily:"'Syne',sans-serif",fontWeight:'700',color:T.navy,fontSize:size*.28+'px',minWidth:size,overflow:'hidden',...style }}>
-      {user?.avatarUrl ? <img src={user.avatarUrl} alt="" style={{ width:'100%',height:'100%',objectFit:'cover' }}/> : initials}
+      {avatarSrc ? <img src={avatarSrc} alt="" style={{ width:'100%',height:'100%',objectFit:'cover' }}/> : initials}
     </div>
   );
 
@@ -167,10 +207,46 @@ const DashboardLayout = () => {
           </div>
 
           <div style={{ display:'flex',alignItems:'center',gap:'.6rem' }}>
-            {/* Search hint */}
-            <div className="search-hint" style={{ display:'flex',alignItems:'center',gap:'.6rem',background:T.surface,border:`1px solid ${T.border}`,borderRadius:'8px',padding:'.4rem .8rem',color:T.muted,fontSize:'.78rem',cursor:'pointer' }}>
-              <span>🔍</span><span>Quick search…</span>
-              <span style={{ background:'rgba(0,198,255,.1)',border:`1px solid ${T.border}`,borderRadius:'4px',padding:'0 .3rem',fontSize:'.65rem',color:T.teal }}>⌘K</span>
+            {/* Search */}
+            <div ref={searchRef} className="search-hint" style={{ position:'relative' }}>
+              <button type="button" onClick={openSearch} style={{ display:'flex',alignItems:'center',gap:'.6rem',background:T.surface,border:`1px solid ${searchOpen?T.borderH:T.border}`,borderRadius:'8px',padding:'.4rem .8rem',color:T.muted,fontSize:'.78rem',cursor:'pointer',fontFamily:"'DM Sans',sans-serif" }}>
+                <span>Search</span><span>Quick search...</span>
+                <span style={{ background:'rgba(0,198,255,.1)',border:`1px solid ${T.border}`,borderRadius:'4px',padding:'0 .3rem',fontSize:'.65rem',color:T.teal }}>Ctrl K</span>
+              </button>
+
+              {searchOpen && (
+                <div style={{ position:'absolute',top:'calc(100% + 8px)',right:0,width:'320px',background:T.surface,border:`1px solid ${T.borderH}`,borderRadius:'12px',boxShadow:'0 16px 48px rgba(0,0,0,.4)',overflow:'hidden',zIndex:520,animation:'fadeIn .15s ease' }}>
+                  <div style={{ padding:'.75rem',borderBottom:`1px solid ${T.border}` }}>
+                    <input
+                      autoFocus
+                      value={searchQuery}
+                      onChange={e=>setSearchQuery(e.target.value)}
+                      onKeyDown={e=>{
+                        if (e.key === 'Enter' && searchResults[0]) goToSearchResult(searchResults[0].path);
+                      }}
+                      placeholder="Search dashboard pages..."
+                      style={{ padding:'.65rem .8rem',fontSize:'.84rem',borderRadius:'8px' }}
+                    />
+                  </div>
+                  <div style={{ maxHeight:'300px',overflowY:'auto',padding:'.35rem' }}>
+                    {searchResults.length ? searchResults.map(item => {
+                      const active = location.pathname === item.path;
+                      return (
+                        <button key={item.path} type="button" onClick={()=>goToSearchResult(item.path)} style={{ width:'100%',display:'flex',alignItems:'center',gap:'.7rem',background:active?'rgba(0,198,255,.1)':'transparent',border:'none',borderRadius:'8px',padding:'.7rem .8rem',color:T.white,cursor:'pointer',textAlign:'left',fontFamily:"'DM Sans',sans-serif" }}>
+                          <span style={{ width:'24px',height:'24px',borderRadius:'7px',display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(0,198,255,.08)',color:T.teal,fontSize:'.82rem' }}>{item.icon}</span>
+                          <span style={{ flex:1 }}>
+                            <span style={{ display:'block',fontSize:'.85rem',fontWeight:'700' }}>{item.label}</span>
+                            <span style={{ display:'block',fontSize:'.7rem',color:T.muted,marginTop:'.08rem' }}>{item.path}</span>
+                          </span>
+                          {active && <span style={{ fontSize:'.68rem',color:T.teal,fontWeight:'700' }}>Current</span>}
+                        </button>
+                      );
+                    }) : (
+                      <div style={{ padding:'1.4rem',textAlign:'center',color:T.muted,fontSize:'.82rem' }}>No matching dashboard pages</div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Notifications bell */}

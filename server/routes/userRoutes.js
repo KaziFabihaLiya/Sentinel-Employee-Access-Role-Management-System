@@ -60,13 +60,15 @@ router.post('/', protect, authorize('admin'), async (req, res) => {
 // PATCH /api/users/profile
 router.patch('/profile', protect, upload.single('avatar'), async (req, res) => {
   try {
-    const { fullName, department, jobTitle } = req.body;
+    const { fullName, department, jobTitle, avatarUrl } = req.body;
 
     const updateData = { fullName, department, jobTitle };
 
     // Only update avatarUrl if a new file was uploaded
     if (req.file) {
       updateData.avatarUrl = `/uploads/${req.file.filename}`;
+    } else if (avatarUrl === '') {
+      updateData.avatarUrl = '';
     }
 
     const user = await User.findByIdAndUpdate(

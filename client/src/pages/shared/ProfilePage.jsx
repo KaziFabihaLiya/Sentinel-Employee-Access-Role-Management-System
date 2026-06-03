@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import axiosInstance from '../../api/axiosInstance';
 import { T, Toast, PageHeader, GLOBAL_CSS } from '../../styles/darkTokens';
+import { getAssetUrl } from '../../utils/assetUrl';
 
 const DEPARTMENTS = ['IT','HR','Finance','Operations','Marketing','Legal','Sales','Engineering'];
 const iStyle = (f,e) => ({
@@ -21,7 +22,7 @@ const ProfilePage = () => {
   const [focused,setFocused]=useState('');
   const [loading,setLoading]=useState(false);
   const [toast,setToast]=useState(null);
-  const [avatar,setAvatar]=useState(user?.avatarUrl||null);
+  const [avatar,setAvatar]=useState(getAssetUrl(user?.avatarUrl)||null);
   const [uploading,setUploading]=useState(false);
   const fileRef=useRef(null);
   const [form,setForm]=useState({ fullName:user?.fullName||'', department:user?.department||'', jobTitle:user?.jobTitle||'' });
@@ -36,7 +37,7 @@ const ProfilePage = () => {
     axiosInstance.get('/auth/me')
       .then(res => {
         setForm({ fullName:res.data.fullName, department:res.data.department, jobTitle:res.data.jobTitle });
-        if (res.data.avatarUrl) setAvatar(res.data.avatarUrl);
+        setAvatar(getAssetUrl(res.data.avatarUrl)||null);
       }).catch(console.error);
   }, []);
 
@@ -47,11 +48,19 @@ const ProfilePage = () => {
     setUploading(true);
     const reader = new FileReader();
     reader.onload = async (ev) => {
-      const b64 = ev.target.result;
-      setAvatar(b64);
+      const previewUrl = ev.target.result;
+      setAvatar(previewUrl);
       try {
-        const res = await axiosInstance.patch('/users/profile', { ...form, avatarUrl:b64 });
-        login({ ...res.data, avatarUrl:b64 }, localStorage.getItem('token'));
+        const data = new FormData();
+        data.append('fullName', form.fullName);
+        data.append('department', form.department);
+        data.append('jobTitle', form.jobTitle);
+        data.append('avatar', file);
+
+        const res = await axiosInstance.patch('/users/profile', data);
+        const savedAvatar = getAssetUrl(res.data.avatarUrl);
+        setAvatar(savedAvatar||null);
+        login({ ...res.data, avatarUrl:savedAvatar }, localStorage.getItem('token'));
         showToast('Profile picture updated');
       } catch { showToast('Failed to save avatar','error'); }
       setUploading(false);
@@ -73,8 +82,10 @@ const ProfilePage = () => {
     if (!form.fullName.trim()) { showToast('Full name required','error'); return; }
     setLoading(true);
     try {
-      const res = await axiosInstance.patch('/users/profile', { ...form, avatarUrl:avatar||'' });
-      login({ ...res.data, avatarUrl:avatar||'' }, localStorage.getItem('token'));
+      const res = await axiosInstance.patch('/users/profile', form);
+      const savedAvatar = getAssetUrl(res.data.avatarUrl);
+      setAvatar(savedAvatar||null);
+      login({ ...res.data, avatarUrl:savedAvatar }, localStorage.getItem('token'));
       showToast('Profile updated successfully');
     } catch (err) { showToast(err.response?.data?.message||'Update failed','error'); }
     finally { setLoading(false); }
