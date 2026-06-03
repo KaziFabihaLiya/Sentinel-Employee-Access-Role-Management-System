@@ -1,6 +1,9 @@
 const axios = require('axios');
 
-const OLLAMA_API_URL = process.env.OLLAMA_API_URL || 'https://kazifabihagolamliya-sentinel-ollama.hf.space/api/generate';
+const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL;
+const OLLAMA_API_URL = process.env.OLLAMA_API_URL
+  || (OLLAMA_BASE_URL ? `${OLLAMA_BASE_URL.replace(/\/+$|\/$/, '')}/api/generate` : null)
+  || 'http://localhost:11434/api/generate';
 const DEFAULT_MODEL = process.env.OLLAMA_GENERATION_MODEL || 'llama3.2:1b';
 
 const normalizeOllamaResponse = (data) => {
