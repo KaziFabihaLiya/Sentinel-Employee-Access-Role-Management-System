@@ -1,5 +1,11 @@
 const User     = require('../models/User');
 const AuditLog = require('../models/AuditLog');
+const multer  = require('multer');
+const path    = require('path');
+
+
+
+
 
 const audit = (req, action, resourceId, details) =>
   AuditLog.create({
@@ -7,6 +13,7 @@ const audit = (req, action, resourceId, details) =>
     action, resource: 'User', resourceId: String(resourceId), details,
     ipAddress: req.ip || '—',
   }).catch(() => {});
+
 
 // GET /api/users
 const getUsers = async (req, res) => {
@@ -75,4 +82,4 @@ const deleteUser = async (req, res) => {
   }
 };
 
-module.exports = { getUsers, toggleActive, changeRole, deleteUser };
+module.exports = { getUsers, toggleActive, changeRole, deleteUser, updateProfile };

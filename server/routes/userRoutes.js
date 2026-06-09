@@ -6,13 +6,18 @@ const User = require('../models/User');
 const { createAuditLog } = require('../utils/auditHelper');
 const multer  = require('multer');
 const path    = require('path');
+const fs = require('fs'); 
 
-// Store uploads in /uploads folder, keep original extension
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, 'uploads/'),
-  filename:    (req, file, cb) => {
+  destination: (req, file, cb) => {
+    const dir = path.join(__dirname, '../uploads'); // absolute path, safe
+    fs.mkdirSync(dir, { recursive: true });         // create if missing ✅
+    cb(null, dir);
+  },
+  filename: (req, file, cb) => {
     const ext = path.extname(file.originalname);
-    cb(null, `avatar-${req.user.id}-${Date.now()}${ext}`);
+    const userId = req.user?.id || 'unknown';
+    cb(null, `avatar-${userId}-${Date.now()}${ext}`);
   },
 });
 
