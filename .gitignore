@@ -36,5 +36,8 @@ GOOGLE_OAUTH_SETUP.md
 IMPLEMENTATION_SUMMARY.md
 OLLAMA_HOSTING_GUIDE.md
 PRE_LAUNCH_CHECKLIST.md
-server/.env.example
+server/.env
 .vite
+netlify.toml
+render.yaml
+client/netlify.toml
