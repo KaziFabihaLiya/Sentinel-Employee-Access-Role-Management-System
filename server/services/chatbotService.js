@@ -224,18 +224,6 @@ const summarizeRequests = async (user) => {
   ].join(' ');
 };
 
-// Fix 1 — summarizeUsers: counts all users by role and returns a plain summary string.
-const summarizeUsers = async () => {
-  const [total, admins, managers, employees] = await Promise.all([
-    User.countDocuments({}),
-    User.countDocuments({ role: 'admin' }),
-    User.countDocuments({ role: 'manager' }),
-    User.countDocuments({ role: 'employee' }),
-  ]);
-
-  return `There are ${total} users total: ${admins} admin${admins !== 1 ? 's' : ''}, ${managers} manager${managers !== 1 ? 's' : ''}, ${employees} employee${employees !== 1 ? 's' : ''}.`;
-};
-
 const recommendRoles = async (question) => {
   const roles = await RoleTemplate.find({ isActive: true }).sort({ accessLevel: 1, roleName: 1 }).lean();
   const ranked = roles
