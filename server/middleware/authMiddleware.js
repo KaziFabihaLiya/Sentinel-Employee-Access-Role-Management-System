@@ -17,7 +17,7 @@ const protect = async (req, res, next) => {
         return res.status(401).json({ message: 'User not found' });
       }
 
-      next(); // ✅ Only continue if everything is good
+      next(); //Only continue if everything is good
       return; // Important: Stop execution here
     } catch (error) {
       console.error('Token verification error:', error);

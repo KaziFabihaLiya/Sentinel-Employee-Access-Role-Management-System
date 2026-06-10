@@ -224,7 +224,17 @@ const summarizeRequests = async (user) => {
   ].join(' ');
 };
 
-// ── Role recommendation ───────────────────────────────────────────────────────
+// Fix 1 — summarizeUsers: counts all users by role and returns a plain summary string.
+const summarizeUsers = async () => {
+  const [total, admins, managers, employees] = await Promise.all([
+    User.countDocuments({}),
+    User.countDocuments({ role: 'admin' }),
+    User.countDocuments({ role: 'manager' }),
+    User.countDocuments({ role: 'employee' }),
+  ]);
+
+  return `There are ${total} users total: ${admins} admin${admins !== 1 ? 's' : ''}, ${managers} manager${managers !== 1 ? 's' : ''}, ${employees} employee${employees !== 1 ? 's' : ''}.`;
+};
 
 const recommendRoles = async (question) => {
   const roles = await RoleTemplate.find({ isActive: true }).sort({ accessLevel: 1, roleName: 1 }).lean();
@@ -317,21 +327,25 @@ async function answerQuestion(question, user) {
   const lower = cleanQuestion.toLowerCase();
   let answer;
 
-  // Count/stat questions answered directly from DB — no LLM needed
-  if (isCountQuestion(lower)) {
-    if (lower.includes('user') || lower.includes('employee') || lower.includes('manager') || lower.includes('admin')) {
-      answer = await summarizeUsers();
-    }
-  }
+  // Fix 2 — Detect stat/count questions BEFORE all other branches.
+  // Trigger words: how many, count, total users, how many users/employees/managers/admins.
+  const isUserCountQuestion =
+    lower.includes('how many users') ||
+    lower.includes('how many employees') ||
+    lower.includes('how many managers') ||
+    lower.includes('how many admins') ||
+    lower.includes('total users') ||
+    (lower.includes('how many') && lower.includes('user')) ||
+    (lower.includes('count') && (lower.includes('user') || lower.includes('employee') || lower.includes('manager') || lower.includes('admin')));
 
-  if (!answer) {
-    if (lower.includes('summary') || lower.includes('summarize') || lower.includes('overview')) {
-      answer = await summarizeRequests(user);
-    } else if (lower.includes('recommend') || lower.includes('which role') || lower.includes('what role')) {
-      answer = await recommendRoles(cleanQuestion);
-    } else if (lower.includes('risk')) {
-      answer = explainRisk(cleanQuestion);
-    }
+  if (isUserCountQuestion) {
+    answer = await summarizeUsers();
+  } else if (lower.includes('summary') || lower.includes('summarize') || lower.includes('overview')) {
+    answer = await summarizeRequests(user);
+  } else if (lower.includes('recommend') || lower.includes('which role') || lower.includes('what role')) {
+    answer = await recommendRoles(cleanQuestion);
+  } else if (lower.includes('risk')) {
+    answer = explainRisk(cleanQuestion);
   }
 
   const context = await retrieveContext(cleanQuestion, user);
@@ -347,4 +361,7 @@ async function answerQuestion(question, user) {
   };
 }
 
+// Fix 4 — retrieveContext is already defined above; both are exported here
+// so chatbotRoutes.js can call retrieveContext directly for the context
+// injection decision in the Groq fallback path.
 module.exports = { answerQuestion, retrieveContext };

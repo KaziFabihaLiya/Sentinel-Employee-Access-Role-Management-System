@@ -29,11 +29,14 @@ const RequestDetailModal = ({ request, approvalPath, history, onClose, onApprove
   const [action,     setAction]     = useState(null);   // null | 'reject' | 'delegate'
   const [users,      setUsers]      = useState([]);
 
-  useEffect(() => {
-    if (action === 'delegate') {
-      axiosInstance.get('/users?role=manager').then(r => setUsers(Array.isArray(r.data) ? r.data : r.data.users||[])).catch(()=>{});
-    }
-  }, [action]);
+// AFTER — use the dedicated delegation-candidates endpoint
+useEffect(() => {
+  if (action === 'delegate') {
+    axiosInstance.get(`/approver/delegation-candidates/${request._id}`)
+      .then(r => setUsers(r.data.candidates || []))
+      .catch(() => setUsers([]));
+  }
+}, [action]);
 
   const isMultiLevel = !!request.workflowId;
   const currentLayer = request.currentApprovalLayerId;

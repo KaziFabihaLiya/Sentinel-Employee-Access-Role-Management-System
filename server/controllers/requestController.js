@@ -1,6 +1,7 @@
-const AccessRequest = require('../models/AccessRequest');
-const User          = require('../models/User');
-const AuditLog      = require('../models/AuditLog');
+const AccessRequest      = require('../models/AccessRequest');
+const User               = require('../models/User');
+const AuditLog           = require('../models/AuditLog');
+const routingEngine      = require('../services/routingEngine');
 
 //    Helper: log to audit                                                     
 const audit = (req, action, resource, resourceId, details) =>
@@ -32,6 +33,7 @@ const submitRequest = async (req, res) => {
 
     const riskLevel = calcRisk(requestedRole, accessDuration);
 
+    // Create the base request first so we always have a record even if routing fails
     const request = await AccessRequest.create({
       employee:       req.user._id,
       department, jobTitle, requestedRole, justification,
@@ -39,6 +41,65 @@ const submitRequest = async (req, res) => {
       riskLevel,
       status: 'Pending',
     });
+
+    // ── Workflow routing ──────────────────────────────────────────────────────
+    // Runs in its own try/catch so a routing failure never blocks the submission
+    try {
+      const workflow = await routingEngine.findWorkflowForRequest({
+        department,
+        requestedRole,
+        riskLevel,
+        accessDuration: accessDuration || 'Permanent',
+      });
+
+      const firstLayer = workflow?.approvalLayers?.[0];
+
+      if (workflow && firstLayer) {
+        const approvers = await routingEngine.findApproversForLayer(
+          firstLayer._id,
+          department
+        );
+
+        // If routing finds nobody, fall back to any manager in the same department
+        let approverIds = approvers.map(a => a._id);
+        if (!approverIds.length) {
+          const fallbackMgr = await User.findOne({
+            role: 'manager',
+            department,
+            isActive: true,
+          }).select('_id');
+          if (fallbackMgr) approverIds = [fallbackMgr._id];
+        }
+
+        const slaDeadline = new Date(
+          Date.now() + (firstLayer.slaHours || 24) * 3_600_000
+        );
+
+        await AccessRequest.findByIdAndUpdate(request._id, {
+          workflowId:             workflow._id,
+          currentApprovalLayerId: firstLayer._id,
+          currentLayerLevel:      firstLayer.layerLevel,
+          currentApproverIds:     approverIds,
+          slaDeadline,
+          layerStatuses: workflow.approvalLayers.map(layer => ({
+            layerId:    layer._id,
+            layerName:  layer.layerName,
+            layerLevel: layer.layerLevel,
+            status:     'PENDING',
+            slaDeadline:
+              String(layer._id) === String(firstLayer._id) ? slaDeadline : null,
+            slaBreached: false,
+          })),
+        });
+      }
+    } catch (routingErr) {
+      // Log but never let this crash the response — request is already saved
+      console.error(
+        `[submitRequest] Workflow routing failed for request ${request._id}:`,
+        routingErr.message
+      );
+    }
+    // ─────────────────────────────────────────────────────────────────────────
 
     await audit(req, 'REQUEST_SUBMITTED', 'AccessRequest', request._id,
       `Submitted request for role: ${requestedRole}`);
@@ -70,26 +131,41 @@ const getMyRequests = async (req, res) => {
 };
 
 //    GET /api/requests/team — Manager gets team's pending requests           
+//    NOTE: This uses the workflow-aware currentApproverIds index so a manager
+//    only sees requests explicitly routed to them, not their whole department.
 const getTeamRequests = async (req, res) => {
   try {
     const { status = 'all', page = 1, limit = 20 } = req.query;
 
-    // Find employees in same department
+    // Primary filter: requests where this manager is a current approver
+    const workflowFilter = { currentApproverIds: req.user._id };
+    if (status !== 'all') workflowFilter.status = status;
+
+    // Secondary filter: legacy requests (no workflowId) from their department
     const employees = await User.find({
       department: req.user.department,
       role: 'employee',
     }).select('_id');
     const ids = employees.map(e => e._id);
 
-    const filter = { employee: { $in: ids } };
-    if (status !== 'all') filter.status = status;
+    const legacyFilter = {
+      employee:   { $in: ids },
+      workflowId: null,           // only truly workflow-less records
+    };
+    if (status !== 'all') legacyFilter.status = status;
 
-    const total    = await AccessRequest.countDocuments(filter);
-    const requests = await AccessRequest.find(filter)
+    // Combine both with $or so nothing is missed
+    const combinedFilter = { $or: [workflowFilter, legacyFilter] };
+
+    const total    = await AccessRequest.countDocuments(combinedFilter);
+    const requests = await AccessRequest.find(combinedFilter)
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(Number(limit))
-      .populate('employee', 'fullName department jobTitle email');
+      .populate('employee',    'fullName department jobTitle email')
+      .populate('reviewedBy',  'fullName')
+      .populate('workflowId',  'workflowName')
+      .populate('currentApprovalLayerId', 'layerName layerLevel');
 
     res.json({ requests, total, page: Number(page), pages: Math.ceil(total / limit) });
   } catch (err) {
@@ -108,6 +184,13 @@ const reviewRequest = async (req, res) => {
     if (!request) return res.status(404).json({ message: 'Request not found' });
     if (request.status !== 'Pending')
       return res.status(400).json({ message: 'Request has already been reviewed' });
+
+    // Guard: only an assigned approver (or admin) may act
+    const isAssigned = request.currentApproverIds.some(
+      id => String(id) === String(req.user._id)
+    );
+    if (!isAssigned && req.user.role !== 'admin')
+      return res.status(403).json({ message: 'You are not assigned to review this request' });
 
     // Normalize: keep first letter uppercase to match schema enum
     const normalized = status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
@@ -140,7 +223,9 @@ const getAllRequests = async (req, res) => {
       .skip((page - 1) * limit)
       .limit(Number(limit))
       .populate('employee', 'fullName department jobTitle email')
-      .populate('reviewedBy', 'fullName');
+      .populate('reviewedBy', 'fullName')
+      .populate('workflowId', 'workflowName')
+      .populate('currentApprovalLayerId', 'layerName layerLevel');
 
     res.json({ requests, total, page: Number(page), pages: Math.ceil(total / limit) });
   } catch (err) {
